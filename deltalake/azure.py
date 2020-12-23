@@ -8,7 +8,7 @@ import pyarrow.parquet as pq
 from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import ContainerClient
 
-from pydelta.reader import DeltaReader
+from deltalake.reader import DeltaReader
 
 
 class AzureDeltaReader(DeltaReader):

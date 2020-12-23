@@ -1,13 +1,14 @@
 [tool.poetry]
-name = "pydelta"
+name = "delta-lake-reader"
 version = "0.1.0"
 description = ""
 authors = ["Jeppe Johan Waarkjær Olsen <jeppe742@gmail.com>"]
+packages= [{include="deltalake"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 pyarrow = "^2.0.0"
-azure-storage-file-datalake = "^12.2.0"
+azure-storage-blob = "^12.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

@@ -4,7 +4,7 @@ from os import path
 
 import pyarrow.parquet as pq
 
-from pydelta.reader import DeltaReader
+from deltalake.reader import DeltaReader
 
 
 class LocalDeltaReader(DeltaReader):

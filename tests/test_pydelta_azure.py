@@ -5,7 +5,7 @@ from unittest import TestCase
 import pyspark
 from pandas.testing import assert_frame_equal
 
-from pydelta.azure import AzureDeltaReader
+from deltalake.azure import AzureDeltaReader
 
 AZURE_CREDENTIALS = os.getenv("AZURE_STORAGE_ACCESS_KEY")
 
@@ -16,7 +16,7 @@ class DeltaReaderAppendTest(TestCase):
         self.path = "tests/data/table1"
 
         self.spark = (
-            pyspark.sql.SparkSession.builder.appName("pydelta")
+            pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config(
@@ -91,7 +91,7 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
         self.path = "tests/data/table2"
 
         self.spark = (
-            pyspark.sql.SparkSession.builder.appName("pydelta")
+            pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config(

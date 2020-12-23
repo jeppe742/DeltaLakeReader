@@ -4,7 +4,7 @@ from unittest import TestCase
 import pyspark
 from pandas.testing import assert_frame_equal
 
-from pydelta.local import LocalDeltaReader
+from deltalake.local import LocalDeltaReader
 
 
 class DeltaReaderAppendTest(TestCase):
@@ -12,7 +12,7 @@ class DeltaReaderAppendTest(TestCase):
     def setUpClass(self):
         self.path = "tests/data/table1"
         self.spark = (
-            pyspark.sql.SparkSession.builder.appName("pydelta")
+            pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config(
@@ -78,7 +78,7 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
     def setUpClass(self):
         self.path = "tests/data/table2"
         self.spark = (
-            pyspark.sql.SparkSession.builder.appName("pydelta")
+            pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config(
@@ -144,7 +144,7 @@ class DeltaReaderOverwriteTest(TestCase):
     def setUpClass(self):
         self.path = "tests/data/table3"
         self.spark = (
-            pyspark.sql.SparkSession.builder.appName("pydelta")
+            pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config(
@@ -210,7 +210,7 @@ class DeltaReaderOverwriteNoCheckpointTest(TestCase):
     def setUpClass(self):
         self.path = "tests/data/table4"
         self.spark = (
-            pyspark.sql.SparkSession.builder.appName("pydelta")
+            pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config(

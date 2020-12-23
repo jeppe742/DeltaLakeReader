@@ -1,4 +1,4 @@
-from pydelta import __version__
+from deltalake import __version__
 
 
 def test_version():
