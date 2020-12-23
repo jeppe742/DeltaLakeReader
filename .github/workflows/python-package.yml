@@ -30,4 +30,4 @@ jobs:
         poetry install 
     - name: Run lint and tests with tox
       run: |
-        tox
+        poetry run tox
