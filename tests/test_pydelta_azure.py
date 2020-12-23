@@ -51,8 +51,8 @@ class DeltaReaderAppendTest(TestCase):
 
     def test_versions(self):
 
-        assert self.table.latest_checkpoint == 10
-        assert self.table.latest_version == 11
+        assert self.table.checkpoint == 10
+        assert self.table.version == 11
 
     def test_data(self):
 
@@ -126,8 +126,8 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
 
     def test_versions(self):
 
-        assert self.table.latest_checkpoint == 0
-        assert self.table.latest_version == 9
+        assert self.table.checkpoint == 0
+        assert self.table.version == 9
 
     def test_data(self):
 

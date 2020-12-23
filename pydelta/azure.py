@@ -59,15 +59,15 @@ class AzureDeltaReader(DeltaReader):
     def _apply_from_checkpoint(self, checkpoint_version: int):
 
         # reset file set, and checkpoint version
-        self.parquet_files = set()
-        self.latest_checkpoint = checkpoint_version
+        self.files = set()
+        self.checkpoint = checkpoint_version
 
-        if self.latest_checkpoint == 0:
+        if self.checkpoint == 0:
             return
 
         # read latest checkpoint
         checkpoint_blob = self._download_blob(
-            f"{self.folder}/_delta_log/{self.latest_checkpoint:020}.checkpoint.parquet"
+            f"{self.folder}/_delta_log/{self.checkpoint:020}.checkpoint.parquet"
         )
         # Read as stream to minimize overhead
         with BytesIO() as checkpoint_stream:
@@ -78,7 +78,7 @@ class AzureDeltaReader(DeltaReader):
             for i, row in checkpoint.iterrows():
                 added_file = row["add"]["path"] if row["add"] else None
                 if added_file:
-                    self.parquet_files.add(f"{self.path}/{added_file}")
+                    self.files.add(f"{self.path}/{added_file}")
 
     def _apply_partial_logs(self, version: int):
         # Checkpoints are created every 10 transactions,
@@ -88,7 +88,7 @@ class AzureDeltaReader(DeltaReader):
         # wild card for the first decimal of the checkpoint version
 
         log_files = self.container_client.list_blobs(
-            name_starts_with=f"{self.folder}/_delta_log/{self.latest_checkpoint//10:019}"
+            name_starts_with=f"{self.folder}/_delta_log/{self.checkpoint//10:019}"
         )
         # sort the log files, so we are sure we get the correct order
         log_files = sorted(log_files, key=lambda log: log.name)
@@ -98,7 +98,7 @@ class AzureDeltaReader(DeltaReader):
 
                 # Get version from log name
                 log_version = re.findall(r"(\d{20})", log_file.name)[0]
-                self.latest_version = int(log_version)
+                self.version = int(log_version)
 
                 # Download log file
                 log = self._download_blob(log_file).readall()
@@ -107,19 +107,17 @@ class AzureDeltaReader(DeltaReader):
                     # Log contains other stuff, but we are only
                     # interested in the add or remove entries
                     if "add" in meta_data.keys():
-                        self.parquet_files.add(
-                            f"{self.path}/{meta_data['add']['path']}"
-                        )
+                        self.files.add(f"{self.path}/{meta_data['add']['path']}")
                     if "remove" in meta_data.keys():
                         remove_file = f"{self.path}/{meta_data['remove']['path']}"
                         # To handle 0 checkpoints, we might read the log file with
                         # same version as checkpoint. this means that we try to
                         # remove a file that belongs to an ealier version,
                         # which we don't have in the list
-                        if remove_file in self.parquet_files:
-                            self.parquet_files.remove(remove_file)
+                        if remove_file in self.files:
+                            self.files.remove(remove_file)
                 # Stop if we have reatched the desired version
-                if self.latest_version == version:
+                if self.version == version:
                     break
 
     def _as_newest_version(self):
@@ -137,11 +135,11 @@ class AzureDeltaReader(DeltaReader):
 
         # apply remaining versions. This can be a maximum of 9 versions.
         # we will just break when we don't find any newer logs
-        self._apply_partial_logs(version=self.latest_checkpoint + 9)
+        self._apply_partial_logs(version=self.checkpoint + 9)
 
     def to_pyarrow(self, columns=None):
         tables = []
-        for file in self.parquet_files:
+        for file in self.files:
 
             with BytesIO() as stream:
                 # File contains full path, which we cannot use with the container client.

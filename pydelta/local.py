@@ -17,44 +17,40 @@ class LocalDeltaReader(DeltaReader):
     def _apply_from_checkpoint(self, checkpoint_version: int):
 
         # reset file set, and checkpoint version
-        self.parquet_files = set()
-        self.latest_checkpoint = checkpoint_version
+        self.files = set()
+        self.checkpoint = checkpoint_version
 
-        if self.latest_checkpoint == 0:
+        if self.checkpoint == 0:
             return
 
         checkpoint = pq.read_table(
-            f"{self.log_path}/{self.latest_checkpoint:020}.checkpoint.parquet"
+            f"{self.log_path}/{self.checkpoint:020}.checkpoint.parquet"
         ).to_pandas()
 
         for i, row in checkpoint.iterrows():
             added_file = row["add"]["path"] if row["add"] else None
             if added_file:
-                self.parquet_files.add(f"{self.path}/{added_file}")
+                self.files.add(f"{self.path}/{added_file}")
 
     def _apply_partial_logs(self, version: int):
-        for i in range(version - self.latest_checkpoint + 1):
+        for i in range(version - self.checkpoint + 1):
             try:
-                with open(
-                    f"{self.log_path}/{self.latest_checkpoint+i:020}.json", "r"
-                ) as f:
-                    self.latest_version = self.latest_checkpoint + i
+                with open(f"{self.log_path}/{self.checkpoint+i:020}.json", "r") as f:
+                    self.version = self.checkpoint + i
                     for line in f:
                         meta_data = json.loads(line)
                         # Log contains other stuff, but we are only
                         # interested in the add or remove entries
                         if "add" in meta_data.keys():
-                            self.parquet_files.add(
-                                f"{self.path}/{meta_data['add']['path']}"
-                            )
+                            self.files.add(f"{self.path}/{meta_data['add']['path']}")
                         if "remove" in meta_data.keys():
                             remove_file = f"{self.path}/{meta_data['remove']['path']}"
                             # To handle 0 checkpoints, we might read the log file with
                             # same version as checkpoint. this means that we try to
                             # remove a file that belongs to an ealier version,
                             # which we don't have in the list
-                            if remove_file in self.parquet_files:
-                                self.parquet_files.remove(remove_file)
+                            if remove_file in self.files:
+                                self.files.remove(remove_file)
 
             # If the file isn't found it should be because we have reatched
             # the newest log file in last iteration
@@ -66,16 +62,16 @@ class LocalDeltaReader(DeltaReader):
         if path.exists(f"{self.log_path}/_last_checkpoint"):
             with open(f"{self.log_path}/_last_checkpoint", "r") as f:
                 checkpoint_info = json.load(f)
-                latest_checkpoint = checkpoint_info["version"]
+                checkpoint = checkpoint_info["version"]
                 # apply versions from checkpoint
-                self._apply_from_checkpoint(latest_checkpoint)
+                self._apply_from_checkpoint(checkpoint)
 
         # apply remaining versions. This can be a maximum of 9 versions.
         # we will just break when we don't find any newer logs
-        self._apply_partial_logs(version=self.latest_checkpoint + 9)
+        self._apply_partial_logs(version=self.checkpoint + 9)
 
     def to_pyarrow(self, columns=None):
-        return pq.ParquetDataset(list(self.parquet_files)).read_pandas(columns=columns)
+        return pq.ParquetDataset(list(self.files)).read_pandas(columns=columns)
 
     def as_version(self, version: int):
         nearest_checkpoint = version // 10

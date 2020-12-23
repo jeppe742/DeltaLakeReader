@@ -3,9 +3,9 @@ class DeltaReader:
         self.path = path
         self.credential = credential
         self.log_path = f"{self.path}/_delta_log"
-        self.latest_version = 0
-        self.latest_checkpoint = 0
-        self.parquet_files = set()
+        self.version = 0
+        self.checkpoint = 0
+        self.files = set()
 
         self._authenticate()
         if not self._is_delta_table():
