@@ -1,14 +1,4 @@
 class DeltaReader:
-
-    __slots__ = (
-        "path",
-        "credential",
-        "log_path",
-        "latest_version",
-        "latest_checkpoint",
-        "parquet_files",
-    )
-
     def __init__(self, path, credential=None):
         self.path = path
         self.credential = credential
