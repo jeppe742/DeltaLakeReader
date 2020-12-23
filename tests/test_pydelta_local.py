@@ -27,7 +27,6 @@ class DeltaReaderAppendTest(TestCase):
             df.write.format("delta").mode("append").save(self.path)
 
         self.table = LocalDeltaReader(self.path)
-        self.table._get_files()
 
     @classmethod
     def tearDownClass(self):
@@ -56,6 +55,23 @@ class DeltaReaderAppendTest(TestCase):
             df_spark.sort_values("id").reset_index(drop=True),
         )
 
+    def test_version(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(5).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 5)
+            .load(self.table.path)
+            .toPandas()
+        )
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.sort_values("id").reset_index(drop=True),
+            df_spark.sort_values("id").reset_index(drop=True),
+        )
+
 
 class DeltaReaderAppendNoCheckpointTest(TestCase):
     @classmethod
@@ -77,7 +93,6 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
             df.write.format("delta").mode("append").save(self.path)
 
         self.table = LocalDeltaReader(self.path)
-        self.table._get_files()
 
     @classmethod
     def tearDownClass(self):
@@ -106,6 +121,23 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
             df_spark.sort_values("id").reset_index(drop=True),
         )
 
+    def test_version(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(5).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 5)
+            .load(self.table.path)
+            .toPandas()
+        )
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.sort_values("id").reset_index(drop=True),
+            df_spark.sort_values("id").reset_index(drop=True),
+        )
+
 
 class DeltaReaderOverwriteTest(TestCase):
     @classmethod
@@ -127,7 +159,6 @@ class DeltaReaderOverwriteTest(TestCase):
             df.write.format("delta").mode("overwrite").save(self.path)
 
         self.table = LocalDeltaReader(self.path)
-        self.table._get_files()
 
     @classmethod
     def tearDownClass(self):
@@ -156,6 +187,23 @@ class DeltaReaderOverwriteTest(TestCase):
             df_spark.sort_values("id").reset_index(drop=True),
         )
 
+    def test_version(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(5).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 5)
+            .load(self.table.path)
+            .toPandas()
+        )
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.sort_values("id").reset_index(drop=True),
+            df_spark.sort_values("id").reset_index(drop=True),
+        )
+
 
 class DeltaReaderOverwriteNoCheckpointTest(TestCase):
     @classmethod
@@ -177,7 +225,6 @@ class DeltaReaderOverwriteNoCheckpointTest(TestCase):
             df.write.format("delta").mode("overwrite").save(self.path)
 
         self.table = LocalDeltaReader(self.path)
-        self.table._get_files()
 
     @classmethod
     def tearDownClass(self):
@@ -199,6 +246,23 @@ class DeltaReaderOverwriteNoCheckpointTest(TestCase):
         df_pandas = self.table.to_pandas()
         # read the table using spark
         df_spark = self.spark.read.format("delta").load(self.table.path).toPandas()
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.sort_values("id").reset_index(drop=True),
+            df_spark.sort_values("id").reset_index(drop=True),
+        )
+
+    def test_version(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(5).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 5)
+            .load(self.table.path)
+            .toPandas()
+        )
 
         # compare dataframes. The index may not be the same order, so we ignore it
         assert_frame_equal(

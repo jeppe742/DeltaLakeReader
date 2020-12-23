@@ -1,4 +1,14 @@
 class DeltaReader:
+
+    __slots__ = (
+        "path",
+        "credential",
+        "log_path",
+        "latest_version",
+        "latest_checkpoint",
+        "parquet_files",
+    )
+
     def __init__(self, path, credential=None):
         self.path = path
         self.credential = credential
@@ -11,7 +21,7 @@ class DeltaReader:
         if not self._is_delta_table():
             raise ValueError(f"No delta table found in {self.path}")
 
-        self._get_files()
+        self._as_newest_version()
 
     def _authenticate(self):
         pass
@@ -19,7 +29,10 @@ class DeltaReader:
     def _is_delta_table(self):
         pass
 
-    def _get_files(self):
+    def _as_newest_version(self):
+        pass
+
+    def as_version(self, version):
         pass
 
     def to_pyarrow(self, columns=None):

@@ -34,7 +34,6 @@ class DeltaReaderAppendTest(TestCase):
             "https://pydelta.blob.core.windows.net/testdata/table1",
             credential=AZURE_CREDENTIALS,
         )
-        self.table._get_files()
 
     @classmethod
     def tearDownClass(self):
@@ -68,6 +67,23 @@ class DeltaReaderAppendTest(TestCase):
             df_spark.sort_values("id").reset_index(drop=True),
         )
 
+    def test_version(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(5).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 5)
+            .load(self.path)
+            .toPandas()
+        )
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.sort_values("id").reset_index(drop=True),
+            df_spark.sort_values("id").reset_index(drop=True),
+        )
+
 
 class DeltaReaderAppendNoCheckpointTest(TestCase):
     @classmethod
@@ -93,7 +109,6 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
             "https://pydelta.blob.core.windows.net/testdata/table2",
             credential=AZURE_CREDENTIALS,
         )
-        self.table._get_files()
 
     @classmethod
     def tearDownClass(self):
@@ -120,6 +135,23 @@ class DeltaReaderAppendNoCheckpointTest(TestCase):
         df_pandas = self.table.to_pandas()
         # read the table using spark
         df_spark = self.spark.read.format("delta").load(self.path).toPandas()
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.sort_values("id").reset_index(drop=True),
+            df_spark.sort_values("id").reset_index(drop=True),
+        )
+
+    def test_version(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(5).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 5)
+            .load(self.path)
+            .toPandas()
+        )
 
         # compare dataframes. The index may not be the same order, so we ignore it
         assert_frame_equal(

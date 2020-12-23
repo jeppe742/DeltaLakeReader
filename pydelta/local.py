@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from os import path
 
 import pyarrow.parquet as pq
@@ -7,34 +8,32 @@ from pydelta.reader import DeltaReader
 
 
 class LocalDeltaReader(DeltaReader):
-    def __init__(self, path):
+    def __init__(self, path: str):
         super(LocalDeltaReader, self).__init__(path)
 
     def _is_delta_table(self):
         return path.exists(self.log_path)
 
-    def _get_files(self):
-        # Check if we have any checkpoints before reading any files
-        if path.exists(f"{self.log_path}/_last_checkpoint"):
-            with open(f"{self.log_path}/_last_checkpoint", "r") as f:
-                checkpoint_info = json.load(f)
-                self.latest_checkpoint = checkpoint_info["version"]
-            # Get the files from the checkpoint first
-            checkpoint = pq.read_table(
-                f"{self.log_path}/{self.latest_checkpoint:020}.checkpoint.parquet"
-            ).to_pandas()
+    def _apply_from_checkpoint(self, checkpoint_version: int):
 
-            for i, row in checkpoint.iterrows():
-                added_file = row["add"]["path"] if row["add"] else None
-                if added_file:
-                    self.parquet_files.add(f"{self.path}/{added_file}")
+        # reset file set, and checkpoint version
+        self.parquet_files = set()
+        self.latest_checkpoint = checkpoint_version
 
-        # look at the meta data between newest checkpoint and newest log file.
-        # We know that the files are named sequentially,
-        # so we can make educated guesses instead of reading all file names.
+        if self.latest_checkpoint == 0:
+            return
 
-        # there should maximum be 10 log files between each checkpoint
-        for i in range(10):
+        checkpoint = pq.read_table(
+            f"{self.log_path}/{self.latest_checkpoint:020}.checkpoint.parquet"
+        ).to_pandas()
+
+        for i, row in checkpoint.iterrows():
+            added_file = row["add"]["path"] if row["add"] else None
+            if added_file:
+                self.parquet_files.add(f"{self.path}/{added_file}")
+
+    def _apply_partial_logs(self, version: int):
+        for i in range(version - self.latest_checkpoint + 1):
             try:
                 with open(
                     f"{self.log_path}/{self.latest_checkpoint+i:020}.json", "r"
@@ -62,5 +61,27 @@ class LocalDeltaReader(DeltaReader):
             except FileNotFoundError:
                 break
 
+    def _as_newest_version(self):
+        # Check if we have any checkpoints before reading any files
+        if path.exists(f"{self.log_path}/_last_checkpoint"):
+            with open(f"{self.log_path}/_last_checkpoint", "r") as f:
+                checkpoint_info = json.load(f)
+                latest_checkpoint = checkpoint_info["version"]
+                # apply versions from checkpoint
+                self._apply_from_checkpoint(latest_checkpoint)
+
+        # apply remaining versions. This can be a maximum of 9 versions.
+        # we will just break when we don't find any newer logs
+        self._apply_partial_logs(version=self.latest_checkpoint + 9)
+
     def to_pyarrow(self, columns=None):
         return pq.ParquetDataset(list(self.parquet_files)).read_pandas(columns=columns)
+
+    def as_version(self, version: int):
+        nearest_checkpoint = version // 10
+
+        deltaReader = deepcopy(self)
+        deltaReader._apply_from_checkpoint(nearest_checkpoint)
+        deltaReader._apply_partial_logs(version=version)
+
+        return deltaReader

@@ -1,5 +1,6 @@
 import json
 import re
+from copy import deepcopy
 from io import BytesIO
 
 import pyarrow
@@ -55,34 +56,31 @@ class AzureDeltaReader(DeltaReader):
         except StopIteration:
             return False
 
-    def _get_files(self):
-        # Try to get the latest checkpoint info
-        try:
-            # get latest checkpoint version
-            checkpoint_info_blob = self._download_blob(
-                file=f"{self.folder}/_delta_log/_last_checkpoint"
-            )
-            checkpoint_info = json.loads(checkpoint_info_blob.readall())
-            self.latest_checkpoint = checkpoint_info["version"]
+    def _apply_from_checkpoint(self, checkpoint_version: int):
 
-            # read latest checkpoint
-            checkpoint_blob = self._download_blob(
-                f"{self.folder}/_delta_log/{self.latest_checkpoint:020}.checkpoint.parquet"
-            )
-            # Read as stream to minimize overhead
-            with BytesIO() as checkpoint_stream:
-                checkpoint_blob.download_to_stream(checkpoint_stream)
-                # Convert stream to pandas table using pyarrow
-                checkpoint = pq.read_table(checkpoint_stream).to_pandas()
+        # reset file set, and checkpoint version
+        self.parquet_files = set()
+        self.latest_checkpoint = checkpoint_version
 
-                for i, row in checkpoint.iterrows():
-                    added_file = row["add"]["path"] if row["add"] else None
-                    if added_file:
-                        self.parquet_files.add(f"{self.path}/{added_file}")
+        if self.latest_checkpoint == 0:
+            return
 
-        except ResourceNotFoundError:
-            pass
+        # read latest checkpoint
+        checkpoint_blob = self._download_blob(
+            f"{self.folder}/_delta_log/{self.latest_checkpoint:020}.checkpoint.parquet"
+        )
+        # Read as stream to minimize overhead
+        with BytesIO() as checkpoint_stream:
+            checkpoint_blob.download_to_stream(checkpoint_stream)
+            # Convert stream to pandas table using pyarrow
+            checkpoint = pq.read_table(checkpoint_stream).to_pandas()
 
+            for i, row in checkpoint.iterrows():
+                added_file = row["add"]["path"] if row["add"] else None
+                if added_file:
+                    self.parquet_files.add(f"{self.path}/{added_file}")
+
+    def _apply_partial_logs(self, version: int):
         # Checkpoints are created every 10 transactions,
         # so we need to find all log files with version
         # up to 9 higher than checkpoint.
@@ -97,6 +95,12 @@ class AzureDeltaReader(DeltaReader):
         for log_file in log_files:
             # skip checkpoint files
             if ".json" in log_file.name:
+
+                # Get version from log name
+                log_version = re.findall(r"(\d{20})", log_file.name)[0]
+                self.latest_version = int(log_version)
+
+                # Download log file
                 log = self._download_blob(log_file).readall()
                 for line in log.split():
                     meta_data = json.loads(line)
@@ -114,11 +118,26 @@ class AzureDeltaReader(DeltaReader):
                         # which we don't have in the list
                         if remove_file in self.parquet_files:
                             self.parquet_files.remove(remove_file)
+                # Stop if we have reatched the desired version
+                if self.latest_version == version:
+                    break
 
-        # set latest version.
-        # We can get this from the name of the last log file
-        m = re.search(r"(\d{20})", log_files[-1].name)
-        self.latest_version = int(m.group(1))
+    def _as_newest_version(self):
+        # Try to get the latest checkpoint info
+        try:
+            # get latest checkpoint version
+            checkpoint_info_blob = self._download_blob(
+                file=f"{self.folder}/_delta_log/_last_checkpoint"
+            )
+            checkpoint_info = json.loads(checkpoint_info_blob.readall())
+            self._apply_from_checkpoint(checkpoint_info["version"])
+
+        except ResourceNotFoundError:
+            pass
+
+        # apply remaining versions. This can be a maximum of 9 versions.
+        # we will just break when we don't find any newer logs
+        self._apply_partial_logs(version=self.latest_checkpoint + 9)
 
     def to_pyarrow(self, columns=None):
         tables = []
@@ -137,3 +156,12 @@ class AzureDeltaReader(DeltaReader):
                 tables.append(pq.read_table(stream, columns=columns))
 
         return pyarrow.concat_tables(tables)
+
+    def as_version(self, version: int):
+        nearest_checkpoint = version // 10
+
+        deltaReader = deepcopy(self)
+        deltaReader._apply_from_checkpoint(nearest_checkpoint)
+        deltaReader._apply_partial_logs(version=version)
+
+        return deltaReader
