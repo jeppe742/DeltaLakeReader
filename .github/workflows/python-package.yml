@@ -31,6 +31,8 @@ jobs:
         source $HOME/.poetry/env
         poetry install 
     - name: Run lint and tests with tox
+      env: 
+        AZURE_STORAGE_ACCESS_KEY: ${{secrets.AZURE_STORAGE_ACCESS_KEY}}
       run: |
         source $HOME/.poetry/env
         poetry run tox
