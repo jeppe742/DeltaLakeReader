@@ -7,7 +7,12 @@ While it tries to solve many issues with data lakes, one of the downsides is tha
 This package tries to fix this, by providing a lightweight python wrapper around the delta file format.
 
 
+# Installation
+Install the package using pip
 
+```
+pip install delta-lake-reader
+```
 # Usage
 Package currently only support local file system, and azure blob storage, but should be easily extended to AWS and GCP in the future.
 The main entry point should be the `DeltaReader` class. This will try to derrive the underlying file system, based on the input URL.
