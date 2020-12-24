@@ -4,12 +4,17 @@ from os import path
 
 import pyarrow.parquet as pq
 
-from deltalake.reader import DeltaReader
+from deltalake.base import BaseDeltaReader
 
 
-class LocalDeltaReader(DeltaReader):
+class LocalDeltaReader(BaseDeltaReader):
     def __init__(self, path: str):
         super(LocalDeltaReader, self).__init__(path)
+
+    def _parse_path(self):
+        # just remove file prefix, since we don't need this
+        if "file://" in self.path:
+            self.path = self.path.replace("file://", "")
 
     def _is_delta_table(self):
         return path.exists(self.log_path)

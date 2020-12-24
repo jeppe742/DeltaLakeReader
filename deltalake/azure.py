@@ -8,10 +8,10 @@ import pyarrow.parquet as pq
 from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import ContainerClient
 
-from deltalake.reader import DeltaReader
+from deltalake.base import BaseDeltaReader
 
 
-class AzureDeltaReader(DeltaReader):
+class AzureDeltaReader(BaseDeltaReader):
     def __init__(self, path, credential=None):
         super(AzureDeltaReader, self).__init__(path, credential)
 
@@ -34,7 +34,6 @@ class AzureDeltaReader(DeltaReader):
             self.folder = m.group(3)
 
     def _authenticate(self):
-        self._parse_path()
         self.container_client = ContainerClient(
             account_url=f"https://{self.account_name}.blob.core.windows.net",
             container_name=self.container_name,
@@ -78,7 +77,7 @@ class AzureDeltaReader(DeltaReader):
             for i, row in checkpoint.iterrows():
                 added_file = row["add"]["path"] if row["add"] else None
                 if added_file:
-                    self.files.add(f"{self.path}/{added_file}")
+                    self.files.add(added_file)
 
     def _apply_partial_logs(self, version: int):
         # Checkpoints are created every 10 transactions,
@@ -107,9 +106,9 @@ class AzureDeltaReader(DeltaReader):
                     # Log contains other stuff, but we are only
                     # interested in the add or remove entries
                     if "add" in meta_data.keys():
-                        self.files.add(f"{self.path}/{meta_data['add']['path']}")
+                        self.files.add(meta_data["add"]["path"])
                     if "remove" in meta_data.keys():
-                        remove_file = f"{self.path}/{meta_data['remove']['path']}"
+                        remove_file = meta_data["remove"]["path"]
                         # To handle 0 checkpoints, we might read the log file with
                         # same version as checkpoint. this means that we try to
                         # remove a file that belongs to an ealier version,
@@ -144,12 +143,8 @@ class AzureDeltaReader(DeltaReader):
             with BytesIO() as stream:
                 # File contains full path, which we cannot use with the container client.
                 # If you create a blob client for each blob, it will introduce a lot of overhead
-                blob = self._download_blob(
-                    file.replace(
-                        f"https://{self.account_name}.blob.core.windows.net/{self.container_name}/",
-                        "",
-                    )
-                )
+                blob = self._download_blob(f"{self.folder}/{file}")
+
                 blob.download_to_stream(stream)
                 tables.append(pq.read_table(stream, columns=columns))
 
