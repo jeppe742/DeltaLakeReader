@@ -1,9 +1,11 @@
 [tool.poetry]
 name = "delta-lake-reader"
-version = "0.1.0"
-description = ""
+version = "0.1.1"
+description = "Lightweight wrapper for reading Delta tables without Spark"
 authors = ["Jeppe Johan Waarkjær Olsen <jeppe742@gmail.com>"]
 packages= [{include="deltalake"}]
+readme = "README.md"
+repository = "https://github.com/jeppe742/DeltaLakeReader"
 
 [tool.poetry.dependencies]
 python = "^3.7"

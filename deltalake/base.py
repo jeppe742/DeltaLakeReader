@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class BaseDeltaReader:
     def __init__(self, path, credential=None):
         self.path = path
@@ -34,5 +37,17 @@ class BaseDeltaReader:
     def to_pyarrow(self, columns=None):
         pass
 
-    def to_pandas(self, columns=None):
+    def to_pandas(self, columns=None) -> pd.DataFrame:
+        """Reads the Delta table as a pandas dataframe
+
+        Parameters:
+        ----------
+        columns : ([string], optional)
+            Only read a subset of columns from the table. Defaults to None.
+
+        Returns:
+        -------
+        df : (pd.Dataframe)
+            Content of Delta table as pandas dataframe
+        """
         return self.to_pyarrow(columns=columns).to_pandas()
