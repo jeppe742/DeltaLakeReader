@@ -40,14 +40,14 @@ jobs:
       - name: Run lint and tests with tox
         env:
           AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-          AWS_BUCKET: ${{AWS_BUCKET}}
-          AWS_DEFAULT_REGION: ${{AWS_DEFAULT_REGION}}
-          AWS_SECRET_ACCESS_KEY: ${{AWS_SECRET_ACCESS_KEY}}
-          AZURE_ACCOUNT_KEY: ${{AZURE_ACCOUNT_KEY}}
-          AZURE_ACCOUNT_NAME: ${{AZURE_ACCOUNT_NAME}}
-          GCP_BUCKET: ${{GCP_BUCKET}}
-          GCP_PROJECT_ID: ${{GCP_PROJECT_ID}}
-          GCP_SA_KEY: ${{GCP_SA_KEY}}
+          AWS_BUCKET: ${{secrets.AWS_BUCKET}}
+          AWS_DEFAULT_REGION: ${{secrets.AWS_DEFAULT_REGION}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          AZURE_ACCOUNT_KEY: ${{secrets.AZURE_ACCOUNT_KEY}}
+          AZURE_ACCOUNT_NAME: ${{secrets.AZURE_ACCOUNT_NAME}}
+          GCP_BUCKET: ${{secrets.GCP_BUCKET}}
+          GCP_PROJECT_ID: ${{secrets.GCP_PROJECT_ID}}
+          GCP_SA_KEY: ${{secrets.GCP_SA_KEY}}
 
         run: |
           source $HOME/.poetry/env
