@@ -18,7 +18,8 @@ AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME")
 class DeltaReaderAppendTest(TestCase):
     @classmethod
     def setUpClass(self):
-        self.path = f"tests/{str(uuid.uuid4())}/table1"
+        self.container = str(uuid.uuid4())
+        self.path = f"{self.container}/tests/table1"
         self.spark = (
             pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
@@ -42,7 +43,7 @@ class DeltaReaderAppendTest(TestCase):
         self.fs = AzureBlobFileSystem(
             account_name=AZURE_ACCOUNT_NAME, account_key=AZURE_ACCOUNT_KEY
         )
-        self.fs.mkdir("tests")
+        self.fs.mkdir(self.container)
         self.fs.upload(self.path, self.path, recursive=True)
         self.table = DeltaTable(self.path, file_system=self.fs)
 
@@ -50,7 +51,7 @@ class DeltaReaderAppendTest(TestCase):
     def tearDownClass(self):
         # remove folder when we are done with the test
         self.fs.rm(self.path, recursive=True)
-        self.fs.rmdir("tests")
+        self.fs.rmdir(self.container)
         shutil.rmtree(self.path)
 
     def test_paths(self):
