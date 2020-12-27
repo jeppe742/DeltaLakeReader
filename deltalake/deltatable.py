@@ -1,15 +1,20 @@
-from pyarrow.dataset import dataset as pyarrow_dataset
-import pyarrow.parquet as pq
-import re
 import json
+import re
 from copy import deepcopy
+
+import pyarrow.parquet as pq
 from fsspec.implementations.local import LocalFileSystem
+from pyarrow.dataset import dataset as pyarrow_dataset
 
 
 class DeltaTable:
     def __init__(self, path, file_system=None):
 
         self.path = path
+        self.log_path = f"{self.path}/_delta_log"
+        self.version = 0
+        self.checkpoint = 0
+        self.files = set()
         if file_system is None:
             file_system = LocalFileSystem()
         self.filesystem = file_system
@@ -23,7 +28,7 @@ class DeltaTable:
         )
 
     def _is_delta_table(self):
-        return self.filesystem.exists(f"{self.path}/_delta_log/{0:020}.json")
+        return self.filesystem.exists(f"{self.log_path}/{0:020}.json")
 
     def _apply_from_checkpoint(self, checkpoint_version: int):
 
@@ -36,7 +41,7 @@ class DeltaTable:
 
         # read latest checkpoint
         with self.filesystem.open(
-            f"{self.path}/_delta_log/{self.checkpoint:020}.checkpoint.parquet"
+            f"{self.log_path}/{self.checkpoint:020}.checkpoint.parquet"
         ) as checkpoint_file:
             checkpoint = pq.read_table(checkpoint_file).to_pandas()
 
@@ -53,7 +58,7 @@ class DeltaTable:
         # wild card for the first decimal of the checkpoint version
 
         log_files = self.filesystem.glob(
-            f"{self.path}/_delta_log/{self.checkpoint//10:019}*.json"
+            f"{self.log_path}/{self.checkpoint//10:019}*.json"
         )
         # sort the log files, so we are sure we get the correct order
         log_files = sorted(log_files)
@@ -87,9 +92,7 @@ class DeltaTable:
         # Try to get the latest checkpoint info
         try:
             # get latest checkpoint version
-            checkpoint_info = self.filesystem.cat(
-                f"{self.path}/_delta_log/_last_checkpoint"
-            )
+            checkpoint_info = self.filesystem.cat(f"{self.log_path}/_last_checkpoint")
             checkpoint_info = json.loads(checkpoint_info)
             self._apply_from_checkpoint(checkpoint_info["version"])
 
@@ -108,13 +111,11 @@ class DeltaTable:
             columns=columns, filter=filter, batch_size=batch_size, **kwargs
         )
 
-    def to_pandas(self, columns=None, filter=None, batch_size=1e9, **kwargs):
+    def to_pandas(self, **kwargs):
         """
         # https://arrow.apache.org/docs/python/generated/pyarrow.Table.html?highlight=to_pandas#pyarrow.Table.to_pandas
         """
-        return self.to_table(
-            columns=columns, filter=filter, batch_size=batch_size
-        ).to_pandas(**kwargs)
+        return self.to_table().to_pandas(**kwargs)
 
     def as_version(self, version: int, inplace=True):
         """
@@ -147,5 +148,8 @@ class DeltaTable:
         deltaTable = deepcopy(self)
         deltaTable._apply_from_checkpoint(nearest_checkpoint)
         deltaTable._apply_partial_logs(version=version)
+        deltaTable.pyarrow_dataset = pyarrow_dataset(
+            source=list(deltaTable.files), filesystem=deltaTable.filesystem
+        )
 
         return deltaTable
