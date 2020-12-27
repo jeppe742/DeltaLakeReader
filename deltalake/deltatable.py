@@ -4,11 +4,27 @@ from copy import deepcopy
 
 import pyarrow.parquet as pq
 from fsspec.implementations.local import LocalFileSystem
+from fsspec.spec import AbstractFileSystem
 from pyarrow.dataset import dataset as pyarrow_dataset
 
 
 class DeltaTable:
+    """
+    Access Delta tables on different filesystems.
+
+    Parameters
+    -----------
+    path:  string
+        Path to the table in the file system.
+        Note that for Azure, AWS and GCP you need to include the container/bucket name in the path
+    file_system: FSSpec compliant filesystem
+        Filesystem to be used for reading the Delta files.
+
+    """
+
     def __init__(self, path, file_system=None):
+        if not isinstance(file_system, AbstractFileSystem) and file_system is not None:
+            raise TypeError("file_system must be a fsspec compliant filesystem")
 
         self.path = path
         self.log_path = f"{self.path}/_delta_log"
@@ -29,6 +45,10 @@ class DeltaTable:
             partitioning="hive",
             format="parquet",
         )
+
+    @property
+    def schema(self):
+        return self.pyarrow_dataset.schema
 
     def _is_delta_table(self):
         return self.filesystem.exists(f"{self.log_path}/{0:020}.json")
@@ -106,19 +126,23 @@ class DeltaTable:
         # we will just break when we don't find any newer logs
         self._apply_partial_logs(version=self.checkpoint + 9)
 
-    def to_table(self, columns=None, filter=None, batch_size=1e9, **kwargs):
+    def to_table(self, *args, **kwargs):
         """
-        https://arrow.apache.org/docs/python/generated/pyarrow.dataset.FileSystemDataset.html#pyarrow.dataset.FileSystemDataset.scan
-        """
-        return self.pyarrow_dataset.to_table(
-            columns=columns, filter=filter, batch_size=batch_size, **kwargs
-        )
+        Convert to a pyarrow Table.
+        Is based on the `to_pandas` function from `pyarrow.Table.to_pandas`,
+        so any this will accept the same arguments.
+        For more information see https://arrow.apache.org/docs/python/generated/pyarrow.dataset.FileSystemDataset.html#pyarrow.dataset.FileSystemDataset.to_table
+        """  # noqa E501
+        return self.pyarrow_dataset.to_table(*args, **kwargs)
 
-    def to_pandas(self, **kwargs):
+    def to_pandas(self, *args, **kwargs):
         """
-        # https://arrow.apache.org/docs/python/generated/pyarrow.Table.html?highlight=to_pandas#pyarrow.Table.to_pandas
-        """
-        return self.to_table().to_pandas(**kwargs)
+        Convert to a pandas dataframe.
+        Is based on the `to_pandas` function from `pyarrow.Table.to_pandas`,
+        so any this will accept the same arguments.
+        For more information see https://arrow.apache.org/docs/python/generated/pyarrow.Table.html?highlight=to_pandas#pyarrow.Table.to_pandas
+        """  # noqa E501
+        return self.to_table().to_pandas(*args, **kwargs)
 
     def as_version(self, version: int, inplace=True):
         """
@@ -126,10 +150,10 @@ class DeltaTable:
 
         Parameters:
         ----------
-        version: (int)
+        version: int
             The table version number that should be loaded
 
-        inplace: (Bool)
+        inplace: Bool
             Specify wether the object should be modified inplace or not.
             If `True`, the current object will be modified.
             if `False`, a new instance of the `DeltaTable` will be returned with the given version.
