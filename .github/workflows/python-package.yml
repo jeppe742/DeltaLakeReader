@@ -5,34 +5,50 @@ name: Build python package
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8']
+        python-version: ["3.7", "3.8"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install poetry
-      run: |
-        curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-    - name: Install dependencies
-      run: |
-        source $HOME/.poetry/env
-        poetry install 
-    - name: Run lint and tests with tox
-      env: 
-        AZURE_STORAGE_ACCESS_KEY: ${{secrets.AZURE_STORAGE_ACCESS_KEY}}
-      run: |
-        source $HOME/.poetry/env
-        poetry run tox
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+      - name: Install dependencies
+        run: |
+          source $HOME/.poetry/env
+          poetry install
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+
+      - name: Run lint and tests with tox
+        env:
+          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+          AWS_BUCKET: ${{AWS_BUCKET}}
+          AWS_DEFAULT_REGION: ${{AWS_DEFAULT_REGION}}
+          AWS_SECRET_ACCESS_KEY: ${{AWS_SECRET_ACCESS_KEY}}
+          AZURE_ACCOUNT_KEY: ${{AZURE_ACCOUNT_KEY}}
+          AZURE_ACCOUNT_NAME: ${{AZURE_ACCOUNT_NAME}}
+          GCP_BUCKET: ${{GCP_BUCKET}}
+          GCP_PROJECT_ID: ${{GCP_PROJECT_ID}}
+          GCP_SA_KEY: ${{GCP_SA_KEY}}
+
+        run: |
+          source $HOME/.poetry/env
+          poetry run tox
