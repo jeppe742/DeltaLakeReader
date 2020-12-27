@@ -24,7 +24,10 @@ class DeltaTable:
         # which makes it hard to inherit from it directly.
         # Instead we will just have the dataset as an attribute and expose the important methods.
         self.pyarrow_dataset = pyarrow_dataset(
-            source=list(self.files), filesystem=self.filesystem
+            source=list(self.files),
+            filesystem=self.filesystem,
+            partitioning="hive",
+            format="parquet",
         )
 
     def _is_delta_table(self):
@@ -141,7 +144,10 @@ class DeltaTable:
             self._apply_from_checkpoint(nearest_checkpoint)
             self._apply_partial_logs(version=version)
             self.pyarrow_dataset = pyarrow_dataset(
-                source=list(self.files), filesystem=self.filesystem
+                source=list(self.files),
+                filesystem=self.filesystem,
+                partitioning="hive",
+                format="parquet",
             )
             return self
 
@@ -149,7 +155,10 @@ class DeltaTable:
         deltaTable._apply_from_checkpoint(nearest_checkpoint)
         deltaTable._apply_partial_logs(version=version)
         deltaTable.pyarrow_dataset = pyarrow_dataset(
-            source=list(deltaTable.files), filesystem=deltaTable.filesystem
+            source=list(deltaTable.files),
+            filesystem=deltaTable.filesystem,
+            partitioning="hive",
+            format="parquet",
         )
 
         return deltaTable

@@ -1,9 +1,10 @@
 import shutil
 from unittest import TestCase
 
+import pyarrow.dataset as ds
 import pyspark
-from pyspark.sql.functions import rand
 from pandas.testing import assert_frame_equal
+from pyspark.sql.functions import col, rand, when
 
 from deltalake import DeltaTable, __version__
 
@@ -26,10 +27,16 @@ class DeltaReaderAppendTest(TestCase):
             )
             .getOrCreate()
         )
-        df = self.spark.range(0, 1000).withColumn("number", rand())
+        df = (
+            self.spark.range(0, 1000)
+            .withColumn("number", rand())
+            .withColumn("number2", when(col("id") < 500, 0).otherwise(1))
+        )
 
         for i in range(12):
-            df.write.format("delta").mode("append").save(self.path)
+            df.write.partitionBy("number2").format("delta").mode("append").save(
+                self.path
+            )
 
         self.table = DeltaTable(self.path)
 
@@ -76,3 +83,15 @@ class DeltaReaderAppendTest(TestCase):
             df_pandas.sort_values("id").reset_index(drop=True),
             df_spark.sort_values("id").reset_index(drop=True),
         )
+
+    def test_partitioning(self):
+        # Partition pruning should half number of rows
+        assert self.table.to_table(filter=ds.field("number2") == 0).num_rows == 6000
+
+    def test_predicate_pushdown(self):
+        # number is random 0-1, so we should have fewer than 12000 rows no matter what
+        assert self.table.to_table(filter=ds.field("number") < 0.5).num_rows < 12000
+
+    def test_column_pruning(self):
+        t = self.table.to_table(columns=["number", "number2"])
+        assert t.column_names == ["number", "number2"]
