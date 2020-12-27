@@ -1,5 +1,6 @@
 import os
 import shutil
+import uuid
 from unittest import TestCase
 
 import pyarrow.dataset as ds
@@ -17,7 +18,7 @@ GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 class DeltaReaderAppendTest(TestCase):
     @classmethod
     def setUpClass(self):
-        self.path = "tests/data/table1"
+        self.path = f"tests/{str(uuid.uuid4())}/table1"
         self.spark = (
             pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
@@ -50,8 +51,8 @@ class DeltaReaderAppendTest(TestCase):
         shutil.rmtree(self.path)
 
     def test_paths(self):
-        assert self.table.path == f"{GCP_BUCKET}/tests/data/table1"
-        assert self.table.log_path == f"{GCP_BUCKET}/tests/data/table1/_delta_log"
+        assert self.table.path == f"{GCP_BUCKET}/{self.path}"
+        assert self.table.log_path == f"{GCP_BUCKET}/{self.path}/_delta_log"
 
     def test_versions(self):
 
