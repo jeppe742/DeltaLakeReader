@@ -45,7 +45,7 @@ class DeltaReaderAppendTest(TestCase):
     @classmethod
     def tearDownClass(self):
         # remove folder when we are done with the test
-        self.fs.rm(f"deltatable/{self.path}", recursive=True)
+        self.fs.rm(f"{AWS_BUCKET}/{self.path}", recursive=True)
         shutil.rmtree(self.path)
 
     def test_paths(self):

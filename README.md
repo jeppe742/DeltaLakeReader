@@ -58,7 +58,7 @@ The Azure integration is based on [adlfs](https://github.com/dask/adlfs) package
 
 
 
-`credential` used to authenticate against the storage account, can be either a SAS token, Access Keys or one of the `azure.identity` classes. [read more about authentication using Azure SDK](https://docs.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.blobserviceclient?view=azure-python#parameters).
+`credential` used to authenticate against the storage account, can be either a SAS token, Access Keys or one of the `azure.identity` classes. See [authentication using Azure SDK](https://docs.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.blobserviceclient?view=azure-python#parameters) for more information.
 
 ```python
 from deltalake import DeltaTable
@@ -76,7 +76,7 @@ df = DeltaTable("mycontainer/somepath/mytable", file_system=fs).to_pandas()
 ## Amazon Web Service (AWS)
 The AWS integration is based on [s3fs](https://s3fs.readthedocs.io/en/latest/) package, developed by the [Dask](https://dask.org/) community. 
 
-To authenticate you can either specify the access key and secret, or since it's build on `boto`, use one of their methods for authentication. [read more about authentication using AWS SDK ](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html)
+To authenticate you can either specify the access key and secret, or since it's build on `boto`, use one of their methods for authentication. See [authentication using AWS SDK ](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) for more information.
 
 ```python
 from deltalake import DeltaTable
@@ -89,7 +89,19 @@ df = DeltaTable("myBucket/somepath/mytable", file_system=fs).to_pandas()
 ```
 
 ## Google Cloud Platform (GCP)
-TODO
+The GCP integration is based on the [gcsfs](https://gcsfs.readthedocs.io/en/latest/), developed by the [Dask](https://dask.org/) community.
+
+For more information about authentication with GCP see the [gcsfs documentation](https://gcsfs.readthedocs.io/en/latest/#credentials) or the [GCP documentation](https://cloud.google.com/docs/authentication)
+
+```python
+from deltalake import DeltaTable
+from gcsfs import GCSFileSystem
+
+#example url  'gs://myBucket/somepath/mytable'
+fs = GCSFileSystem() #authenticate using environment variables, in this example
+df = DeltaTable("myBucket/somepath/mytable", file_system=fs).to_pandas()
+
+```
 
 ## Time travel
 One of the features of the Delta format, is the ability to do [timetravel](https://docs.delta.io/0.3.0/delta-batch.html#query-an-older-snapshot-of-a-table-time-travel).
@@ -139,7 +151,7 @@ df = DeltaTable(path, file_system=fs).to_pandas()
 
 ## Disclaimer
 Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
-The stand alone reader is JVM based, but a Rust library with python bindings is also mentioned. This, however, cannot be pip installed which may discourage many python developers. 
+The stand alone reader is JVM based, but a [Rust library](https://github.com/delta-io/delta-rs) with python bindings is also mentioned. This, however, cannot be pip installed which may discourage many python developers. 
 Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
 # Read more
 [Delta transaction log](https://databricks.com/blog/2019/08/21/diving-into-delta-lake-unpacking-the-transaction-log.html)
