@@ -1,8 +1,8 @@
 ![Build package](https://github.com/jeppe742/DeltaLakeReader/workflows/Build%20python%20package/badge.svg)
 # Delta Lake Reader
-The [Delta](https://github.com/delta-io/delta) format, developed by Databricks, is often used to build data lakes.
+The [Delta](https://github.com/delta-io/delta) format, developed by Databricks, is often used to build data lakes or lakehouses.
 
-While it tries to solve many issues with data lakes, one of the downsides is that delta tables rely on Spark to read the data. If you only need to read a small table, this can introduce a lot of unnecessary overhead.
+While it has many benefits, one of the downsides of delta tables is that they rely on Spark to read the data. This might be infeasible, or atleast introduce a lot of overhead, if you want to build data applications like [Streamlit](https://www.streamlit.io/) apps or ML APIs ontop of the data in your Delta tables. 
 
 This package tries to fix this, by providing a lightweight python wrapper around the delta file format, **without** any Spark dependencies
 
@@ -103,7 +103,7 @@ df = DeltaTable("myBucket/somepath/mytable", file_system=fs).to_pandas()
 
 ```
 
-## Time travel
+# Time travel
 One of the features of the Delta format, is the ability to do [timetravel](https://docs.delta.io/0.3.0/delta-batch.html#query-an-older-snapshot-of-a-table-time-travel).
 
 This can be done using the `as_version` method. Note that this currenly only support specific version, and not timestamp.
@@ -115,7 +115,7 @@ df = DeltaTable("somepath/mytable").as_version(5).to_pandas()
 Timetraveling to a version that has been vacuumed, currently results in undefined behavior
 
 
-## Predicate Pushdown, Partition Pruning & Columnar file formats
+# Predicate Pushdown, Partition Pruning & Columnar file formats
 Since the resulting `DeltaTable` is based on the `pyarrow.DataSet`, you get many cool features for free. 
 
 The `DeltaTable.to_table` is inherited from `pyarrow.Dataset.to_table`. This means that you can include arguments like `filter`, which will do partition pruning and predicate pushdown. If you have a partitioned dataset, partition pruning can potentially reduce the data needed to be downloaded substantially. The predicate pushdown will not have any effect on the amount of data downloaded, but will reduce the dataset size when loaded into memory.
@@ -139,9 +139,7 @@ df = DeltaTable("...").to_table(columns=["age","name"]).to_pandas()
 [Read more about filtering data using PyArrow](https://arrow.apache.org/docs/python/dataset.html#filtering-data)
 
 
-
-
-## Bring Your Own Filesystem
+# Bring Your Own Filesystem
 Since the implementation is using the FSSpec for filesystem abstraction, you can in principle use any FSSpec filesystem. [See more about available FSSpec interfaces](https://filesystem-spec.readthedocs.io/en/latest/api.html#built-in-implementations).
 
 ```python
@@ -149,13 +147,27 @@ fs = SomeFSSpecFilesystem()
 df = DeltaTable(path, file_system=fs).to_pandas()
 ```
 
-## Disclaimer
-Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
-The stand alone reader is JVM based, but a [Rust library](https://github.com/delta-io/delta-rs) with python bindings is also mentioned. This, however, cannot be pip installed which may discourage many python developers. 
-Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
+# Performance comparison with PySpark
+It is possible to run `PySpark` in local mode, which means you can run spark code without having to spin up an entire cluster. This, however, still involves a big performance and resource usage overhead. To investigate if this module is actually faster than using `PySpark` i made a small experiment. 
+
+The time to read a table into a pandas dataframe was measured for a table with 3 columns, and various number of rows. 
+The tables were stored locally on a VM (8 vCPUs, 32GB ram). This might not be a bit synthetic test case since you normally would store your table in a remote blob store, where network latency would even out the results a bit. `PySpark` was, however, still given an advantage by first being timed after starting the Spark session, which can take several seconds. Furthermore the resource usage by `PySpark` should be significantly higher, both in terms of CPU and RAM, which can be another limiting factor. Finally, reading data from remote blob storage often requires adding cloud specific JARs to the runtime, which may or may not be tedious to get to work.
+
+The results can be seen below, where `delta-lake-reader` is about 100x faster than `PySpark` on average
+![](performance_tests/results.png)
+
+
 # Read more
+
+[Delta Table paper](https://databricks.com/research/delta-lake-high-performance-acid-table-storage-overcloud-object-stores)
+
 [Delta transaction log](https://databricks.com/blog/2019/08/21/diving-into-delta-lake-unpacking-the-transaction-log.html)
 
 [PyArrow Documentation](https://arrow.apache.org/docs/index.html)
 
 [FSSpec Documentation](https://filesystem-spec.readthedocs.io/en/latest/)
+
+## Disclaimer
+Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
+The stand alone reader is JVM based, but a [Rust library](https://github.com/delta-io/delta-rs) with python bindings is also mentioned. This, however, cannot be pip installed which may discourage many python developers. 
+Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
