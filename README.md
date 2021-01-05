@@ -6,6 +6,13 @@ While it has many benefits, one of the downsides of delta tables is that they re
 
 This package tries to fix this, by providing a lightweight python wrapper around the delta file format, **without** any Spark dependencies
 
+## Disclaimer
+Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
+The stand alone reader is JVM based, but an official Rust implementation with python bindings also exists. Back then the python bindings couldn't be pip installed, which was a major inconvenience for python developers, but this has since been added.
+While there is a lot of overlap between these two project, this projects still supports a few additional features, compared to the Rust implemtation, like more alternatives for authenticating to azure (identity based, instead of only relying on account key) and support for more file systems like GCP buckets.
+If you, however, are interested in a more actively maintained package, if would recommend [the official Delta Rust implemtation](
+https://github.com/delta-io/delta-rs).
+Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
 
 # Installation
 Install the package using pip
@@ -151,7 +158,7 @@ df = DeltaTable(path, file_system=fs).to_pandas()
 It is possible to run `PySpark` in local mode, which means you can run spark code without having to spin up an entire cluster. This, however, still involves a big performance and resource usage overhead. To investigate if this module is actually faster than using `PySpark` i made a small experiment. 
 
 The time to read a table into a pandas dataframe was measured for a table with 3 columns, and various number of rows. 
-The tables were stored locally on a VM (8 vCPUs, 32GB ram). This might not be a bit synthetic test case since you normally would store your table in a remote blob store, where network latency would even out the results a bit. `PySpark` was, however, still given an advantage by first being timed after starting the Spark session, which can take several seconds. Furthermore the resource usage by `PySpark` should be significantly higher, both in terms of CPU and RAM, which can be another limiting factor. Finally, reading data from remote blob storage often requires adding cloud specific JARs to the runtime, which may or may not be tedious to get to work.
+The tables were stored locally on a VM (8 vCPUs, 32GB ram). This might be a synthetic test case since you normally would store your table in a remote blob store, where network latency would even out the results a bit. `PySpark` was, however, still given an advantage by first being timed after starting the Spark session, which can take several seconds. Furthermore the resource usage by `PySpark` should be significantly higher, both in terms of CPU and RAM, which can be another limiting factor. Finally, reading data from remote blob storage often requires adding cloud specific JARs to the runtime, which may or may not be tedious to get to work.
 
 The results can be seen below, where `delta-lake-reader` is about 100x faster than `PySpark` on average
 ![](performance_tests/results.png)
@@ -167,7 +174,3 @@ The results can be seen below, where `delta-lake-reader` is about 100x faster th
 
 [FSSpec Documentation](https://filesystem-spec.readthedocs.io/en/latest/)
 
-## Disclaimer
-Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
-The stand alone reader is JVM based, but a [Rust library](https://github.com/delta-io/delta-rs) with python bindings is also mentioned. This, however, cannot be pip installed which may discourage many python developers. 
-Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
