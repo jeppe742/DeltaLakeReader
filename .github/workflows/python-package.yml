@@ -9,7 +9,8 @@ on:
     paths-ignore:
       - "performance_tests/**"
       - "**.md"
-  pull_request:
+  pull_request_target:
+    types: [labeled]
     branches: [main]
 
 jobs:
