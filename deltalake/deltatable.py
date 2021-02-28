@@ -93,7 +93,7 @@ class DeltaTable:
 
             # Download log file
             log = self.filesystem.cat(log_file)
-            for line in log.split():
+            for line in log.splitlines():
                 meta_data = json.loads(line)
                 # Log contains other stuff, but we are only
                 # interested in the add or remove entries
