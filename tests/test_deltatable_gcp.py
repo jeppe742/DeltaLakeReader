@@ -139,11 +139,12 @@ class DeltaReaderUpdateTest(TestCase):
     @classmethod
     def tearDownClass(self):
         # remove folder when we are done with the test
+        self.fs.rm(f"{GCP_BUCKET}/{self.path}", recursive=True)
         shutil.rmtree(self.path)
 
     def test_paths(self):
-        assert self.table.path == self.path
-        assert self.table.log_path == f"{self.path}/_delta_log"
+        assert self.table.path == f"{GCP_BUCKET}/{self.path}"
+        assert self.table.log_path == f"{GCP_BUCKET}/{self.path}/_delta_log"
 
     def test_versions(self):
 
@@ -155,7 +156,7 @@ class DeltaReaderUpdateTest(TestCase):
         # read the parquet files using pandas
         df_pandas = self.table.to_pandas()
         # read the table using spark
-        df_spark = self.spark.read.format("delta").load(self.table.path).toPandas()
+        df_spark = self.spark.read.format("delta").load(self.path).toPandas()
 
         # compare dataframes. The index may not be the same order, so we ignore it
         assert_frame_equal(
@@ -170,7 +171,7 @@ class DeltaReaderUpdateTest(TestCase):
         df_spark = (
             self.spark.read.format("delta")
             .option("versionAsOf", 5)
-            .load(self.table.path)
+            .load(self.path)
             .toPandas()
         )
 
