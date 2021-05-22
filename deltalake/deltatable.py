@@ -100,13 +100,13 @@ class DeltaTable:
                 if "add" in meta_data.keys():
                     self.files.add(f"{self.path}/{meta_data['add']['path']}")
                 if "remove" in meta_data.keys():
-                    remove_file = meta_data["remove"]["path"]
+                    remove_file = f"{self.path}/{meta_data['remove']['path']}"
                     # To handle 0 checkpoints, we might read the log file with
                     # same version as checkpoint. this means that we try to
                     # remove a file that belongs to an ealier version,
                     # which we don't have in the list
                     if remove_file in self.files:
-                        self.files.remove(f"{self.path}/{remove_file}")
+                        self.files.remove(remove_file)
             # Stop if we have reatched the desired version
             if self.version == version:
                 break
