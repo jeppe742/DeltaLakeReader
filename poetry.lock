@@ -867,11 +867,11 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "pyspark"
-version = "3.1.1"
+version = "3.0.2"
 description = "Apache Spark Python API"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = "*"
 
 [package.dependencies]
 py4j = "0.10.9"
@@ -879,7 +879,7 @@ py4j = "0.10.9"
 [package.extras]
 ml = ["numpy (>=1.7)"]
 mllib = ["numpy (>=1.7)"]
-sql = ["pandas (>=0.23.2)", "pyarrow (>=1.0.0)"]
+sql = ["pandas (>=0.23.2)", "pyarrow (>=0.15.1)"]
 
 [[package]]
 name = "pytest"
@@ -1149,7 +1149,7 @@ gcp = ["gcsfs"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "097c7d8522d72607fdb34337bb94b6f347ab05b210d9d8bb2988ca01d5bd58eb"
+content-hash = "cc3ea68066074474aeb15ed3ee01d4928c8205af82748377aa0b669f44900094"
 
 [metadata.files]
 adal = [
@@ -1666,7 +1666,7 @@ pyparsing = [
     {file = "pyparsing-2.4.7.tar.gz", hash = "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1"},
 ]
 pyspark = [
-    {file = "pyspark-3.1.1.tar.gz", hash = "sha256:104abc146d4ffb72d4c683d25d7af5a6bf955d94590a76f542ee23185670aa7e"},
+    {file = "pyspark-3.0.2.tar.gz", hash = "sha256:d4f2ced43394ad773f7b516a4bbcb5821a940462a17b1a25f175c83771b62ebc"},
 ]
 pytest = [
     {file = "pytest-5.4.3-py3-none-any.whl", hash = "sha256:5c0db86b698e8f170ba4582a492248919255fcd4c79b1ee64ace34301fb589a1"},
