@@ -131,7 +131,10 @@ class DeltaReaderUpdateTest(TestCase):
             "table1"
         )
         self.spark.sql("UPDATE table1 set number=123 where id='0'")
-        self.table = DeltaTable(self.path)
+        self.fs = GCSFileSystem(project=GCP_PROJECT_ID)
+
+        self.fs.upload(self.path, f"{GCP_BUCKET}/{self.path}", recursive=True)
+        self.table = DeltaTable(f"{GCP_BUCKET}/{self.path}", file_system=self.fs)
 
     @classmethod
     def tearDownClass(self):

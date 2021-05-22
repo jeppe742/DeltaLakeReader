@@ -135,7 +135,12 @@ class DeltaReaderUpdateTest(TestCase):
             "table1"
         )
         self.spark.sql("UPDATE table1 set number=123 where id='0'")
-        self.table = DeltaTable(self.path)
+        self.fs = AzureBlobFileSystem(
+            account_name=AZURE_ACCOUNT_NAME, account_key=AZURE_ACCOUNT_KEY
+        )
+        self.fs.mkdir(self.container)
+        self.fs.upload(self.path, self.path, recursive=True)
+        self.table = DeltaTable(self.path, file_system=self.fs)
 
     @classmethod
     def tearDownClass(self):

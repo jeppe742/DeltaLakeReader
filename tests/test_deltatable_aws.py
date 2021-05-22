@@ -130,7 +130,10 @@ class DeltaReaderUpdateTest(TestCase):
             "table1"
         )
         self.spark.sql("UPDATE table1 set number=123 where id='0'")
-        self.table = DeltaTable(self.path)
+        self.fs = S3FileSystem()
+
+        self.fs.upload(self.path, f"{AWS_BUCKET}/{self.path}", recursive=True)
+        self.table = DeltaTable(f"{AWS_BUCKET}/{self.path}", file_system=self.fs)        
 
     @classmethod
     def tearDownClass(self):
