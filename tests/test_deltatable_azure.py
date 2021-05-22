@@ -16,7 +16,7 @@ AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY")
 AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME")
 
 
-@pytest.mark.flaky(reruns=2, reruns_delay=2)
+@pytest.mark.flaky(reruns=2, reruns_delay=10)
 class DeltaReaderAppendTest(TestCase):
     @classmethod
     def setUpClass(self):
@@ -108,7 +108,7 @@ class DeltaReaderAppendTest(TestCase):
         assert t.column_names == ["number", "number2"]
 
 
-@pytest.mark.flaky(reruns=2, reruns_delay=2)
+@pytest.mark.flaky(reruns=2, reruns_delay=10)
 class DeltaReaderUpdateTest(TestCase):
     @classmethod
     def setUpClass(self):
