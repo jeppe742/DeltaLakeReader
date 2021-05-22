@@ -133,7 +133,7 @@ class DeltaReaderUpdateTest(TestCase):
         self.fs = S3FileSystem()
 
         self.fs.upload(self.path, f"{AWS_BUCKET}/{self.path}", recursive=True)
-        self.table = DeltaTable(f"{AWS_BUCKET}/{self.path}", file_system=self.fs)        
+        self.table = DeltaTable(f"{AWS_BUCKET}/{self.path}", file_system=self.fs)
 
     @classmethod
     def tearDownClass(self):
