@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import pyarrow.dataset as ds
 import pyspark
+import pytest
 from adlfs.spec import AzureBlobFileSystem
 from pandas.testing import assert_frame_equal
 from pyspark.sql.functions import col, rand, when
@@ -15,6 +16,7 @@ AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY")
 AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME")
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
 class DeltaReaderAppendTest(TestCase):
     @classmethod
     def setUpClass(self):
@@ -106,6 +108,7 @@ class DeltaReaderAppendTest(TestCase):
         assert t.column_names == ["number", "number2"]
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
 class DeltaReaderUpdateTest(TestCase):
     @classmethod
     def setUpClass(self):
