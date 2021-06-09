@@ -92,8 +92,9 @@ class DeltaTable:
             self.version = int(log_version)
 
             # Download log file
-            log = self.filesystem.cat(log_file)
-            for line in log.splitlines():
+            with self.filesystem.open(log_file) as l:
+                log = l.readlines()
+            for line in log:
                 meta_data = json.loads(line)
                 # Log contains other stuff, but we are only
                 # interested in the add or remove entries
@@ -115,7 +116,8 @@ class DeltaTable:
         # Try to get the latest checkpoint info
         try:
             # get latest checkpoint version
-            checkpoint_info = self.filesystem.cat(f"{self.log_path}/_last_checkpoint")
+            with self.filesystem.open(f'{self.log_path}/_last_checkpoint') as lst_check:
+                checkpoint_info = lst_check.read()
             checkpoint_info = json.loads(checkpoint_info)
             self._apply_from_checkpoint(checkpoint_info["version"])
 
