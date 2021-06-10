@@ -92,31 +92,30 @@ class DeltaTable:
             self.version = int(log_version)
 
             # Download log file
-            with self.filesystem.open(log_file) as l:
-                log = l.readlines()
-            for line in log:
-                meta_data = json.loads(line)
-                # Log contains other stuff, but we are only
-                # interested in the add or remove entries
-                if "add" in meta_data.keys():
-                    self.files.add(f"{self.path}/{meta_data['add']['path']}")
-                if "remove" in meta_data.keys():
-                    remove_file = f"{self.path}/{meta_data['remove']['path']}"
-                    # To handle 0 checkpoints, we might read the log file with
-                    # same version as checkpoint. this means that we try to
-                    # remove a file that belongs to an ealier version,
-                    # which we don't have in the list
-                    if remove_file in self.files:
-                        self.files.remove(remove_file)
-            # Stop if we have reatched the desired version
-            if self.version == version:
-                break
+            with self.filesystem.open(log_file) as log:
+                for line in log:
+                    meta_data = json.loads(line)
+                    # Log contains other stuff, but we are only
+                    # interested in the add or remove entries
+                    if "add" in meta_data.keys():
+                        self.files.add(f"{self.path}/{meta_data['add']['path']}")
+                    if "remove" in meta_data.keys():
+                        remove_file = f"{self.path}/{meta_data['remove']['path']}"
+                        # To handle 0 checkpoints, we might read the log file with
+                        # same version as checkpoint. this means that we try to
+                        # remove a file that belongs to an ealier version,
+                        # which we don't have in the list
+                        if remove_file in self.files:
+                            self.files.remove(remove_file)
+                # Stop if we have reatched the desired version
+                if self.version == version:
+                    break
 
     def _as_newest_version(self):
         # Try to get the latest checkpoint info
         try:
             # get latest checkpoint version
-            with self.filesystem.open(f'{self.log_path}/_last_checkpoint') as lst_check:
+            with self.filesystem.open(f"{self.log_path}/_last_checkpoint") as lst_check:
                 checkpoint_info = lst_check.read()
             checkpoint_info = json.loads(checkpoint_info)
             self._apply_from_checkpoint(checkpoint_info["version"])
