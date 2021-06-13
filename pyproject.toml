@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "delta-lake-reader"
-version = "0.2.3"
+version = "0.2.5"
 description = "Lightweight wrapper for reading Delta tables without Spark"
 authors = ["Jeppe Johan Waarkjær Olsen <jeppe742@gmail.com>"]
 packages= [{include="deltalake"}]
@@ -29,6 +29,7 @@ pyspark = "3.0.*"
 pandas = "^1.1.5"
 ipython = "^7.1.0"
 pytest-rerunfailures = "^9.1.1"
+pytest-sugar = "^0.9.4"
 
 [tool.poetry.extras]
 azure = ["adlfs","aiohttp"]

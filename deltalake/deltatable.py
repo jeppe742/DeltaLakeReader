@@ -31,6 +31,8 @@ class DeltaTable:
         self.version = 0
         self.checkpoint = 0
         self.files = set()
+        self._latest_file = ""
+        self._latest_file_time = 0
         if file_system is None:
             file_system = LocalFileSystem()
         self.filesystem = file_system
@@ -39,11 +41,24 @@ class DeltaTable:
         # The PyArrow Dataset is exposed by a factory class,
         # which makes it hard to inherit from it directly.
         # Instead we will just have the dataset as an attribute and expose the important methods.
-        self.pyarrow_dataset = pyarrow_dataset(
+        self.pyarrow_dataset = self._pyarrow_dataset()
+
+    def _pyarrow_dataset(self):
+        # Use the latest file to fetch the schema.
+        # This will allow for schema evolution
+        schema = pyarrow_dataset(
+            source=self._latest_file,
+            filesystem=self.filesystem,
+            partitioning="hive",
+            format="parquet",
+        ).schema
+
+        return pyarrow_dataset(
             source=list(self.files),
             filesystem=self.filesystem,
             partitioning="hive",
             format="parquet",
+            schema=schema,
         )
 
     @property
@@ -53,10 +68,15 @@ class DeltaTable:
     def _is_delta_table(self):
         return self.filesystem.exists(f"{self.log_path}/{0:020}.json")
 
+    def _reset_state(self):
+        self.files = set()
+        self._latest_file = ""
+        self._latest_file_time = 0
+
     def _apply_from_checkpoint(self, checkpoint_version: int):
 
         # reset file set, and checkpoint version
-        self.files = set()
+        self._reset_state()
         self.checkpoint = checkpoint_version
 
         if self.checkpoint == 0:
@@ -69,9 +89,16 @@ class DeltaTable:
             checkpoint = pq.read_table(checkpoint_file).to_pandas()
 
             for i, row in checkpoint.iterrows():
-                added_file = row["add"]["path"] if row["add"] else None
+                if not row["add"]:
+                    continue
+                added_file = f"{self.path}/{row['add']['path']}"
                 if added_file:
-                    self.files.add(f"{self.path}/{added_file}")
+                    self.files.add(added_file)
+
+                modificationTime = row["add"]["modificationTime"]
+                if modificationTime > self._latest_file_time:
+                    self._latest_file = added_file
+                    self._latest_file_time = modificationTime
 
     def _apply_partial_logs(self, version: int):
         # Checkpoints are created every 10 transactions,
@@ -98,7 +125,12 @@ class DeltaTable:
                     # Log contains other stuff, but we are only
                     # interested in the add or remove entries
                     if "add" in meta_data.keys():
-                        self.files.add(f"{self.path}/{meta_data['add']['path']}")
+                        file = f"{self.path}/{meta_data['add']['path']}"
+                        self.files.add(file)
+
+                        self._latest_file_time = meta_data["add"]["modificationTime"]
+                        self._latest_file = file
+
                     if "remove" in meta_data.keys():
                         remove_file = f"{self.path}/{meta_data['remove']['path']}"
                         # To handle 0 checkpoints, we might read the log file with
@@ -164,26 +196,16 @@ class DeltaTable:
         dr : (DeltaTable)
             Delta table that has parsed the log files for the specific version
         """
-        nearest_checkpoint = version // 10
+        nearest_checkpoint = version // 10 * 10
         if inplace:
             self._apply_from_checkpoint(nearest_checkpoint)
             self._apply_partial_logs(version=version)
-            self.pyarrow_dataset = pyarrow_dataset(
-                source=list(self.files),
-                filesystem=self.filesystem,
-                partitioning="hive",
-                format="parquet",
-            )
+            self.pyarrow_dataset = self._pyarrow_dataset()
             return self
 
         deltaTable = deepcopy(self)
         deltaTable._apply_from_checkpoint(nearest_checkpoint)
         deltaTable._apply_partial_logs(version=version)
-        deltaTable.pyarrow_dataset = pyarrow_dataset(
-            source=list(deltaTable.files),
-            filesystem=deltaTable.filesystem,
-            partitioning="hive",
-            format="parquet",
-        )
+        deltaTable.pyarrow_dataset = deltaTable._pyarrow_dataset()
 
         return deltaTable
