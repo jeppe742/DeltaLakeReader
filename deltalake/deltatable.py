@@ -97,7 +97,8 @@ class DeltaTable:
 
                 modificationTime = row["add"]["modificationTime"]
                 if modificationTime > self._latest_file_time:
-                    self.latest_file = added_file
+                    self._latest_file = added_file
+                    self._latest_file_time = modificationTime
 
     def _apply_partial_logs(self, version: int):
         # Checkpoints are created every 10 transactions,
