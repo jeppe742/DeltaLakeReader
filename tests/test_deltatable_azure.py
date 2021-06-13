@@ -236,7 +236,8 @@ class DeltaReaderUpdateTest(TestCase):
 class DeltaReaderSchemaEvolutionTest(TestCase):
     @classmethod
     def setUpClass(self):
-        self.path = f"tests/{str(uuid.uuid4())}/table1"
+        self.container = str(uuid.uuid4())
+        self.path = f"{self.container}/tests/table1"
         self.spark = (
             pyspark.sql.SparkSession.builder.appName("deltalake")
             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
@@ -296,7 +297,7 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
         # read the parquet files using pandas
         df_pandas = self.table.to_pandas()
         # read the table using spark
-        df_spark = self.spark.read.format("delta").load(self.table.path).toPandas()
+        df_spark = self.spark.read.format("delta").load(self.path).toPandas()
 
         # compare dataframes. The index may not be the same order, so we ignore it
         assert_frame_equal(
@@ -310,7 +311,7 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
         df_spark = (
             self.spark.read.format("delta")
             .option("versionAsOf", 5)
-            .load(self.table.path)
+            .load(self.path)
             .toPandas()
         )
 
@@ -326,7 +327,7 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
         df_spark = (
             self.spark.read.format("delta")
             .option("versionAsOf", 11)
-            .load(self.table.path)
+            .load(self.path)
             .toPandas()
         )
 
