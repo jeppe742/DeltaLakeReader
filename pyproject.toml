@@ -5,6 +5,7 @@ description = "Lightweight wrapper for reading Delta tables without Spark"
 authors = ["Jeppe Johan Waarkjær Olsen <jeppe742@gmail.com>"]
 packages= [{include="deltalake"}]
 readme = "README.md"
+license = "Apache-2.0"
 repository = "https://github.com/jeppe742/DeltaLakeReader"
 
 [tool.poetry.dependencies]
