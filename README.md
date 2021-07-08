@@ -1,18 +1,12 @@
 ![Build package](https://github.com/jeppe742/DeltaLakeReader/workflows/Build%20python%20package/badge.svg)
+![pypi](https://badge.fury.io/py/delta-lake-reader.svg)
+[![Downloads](https://pepy.tech/badge/delta-lake-reader/month)](https://pepy.tech/project/delta-lake-reader)
 # Delta Lake Reader
 The [Delta](https://github.com/delta-io/delta) format, developed by Databricks, is often used to build data lakes or lakehouses.
 
 While it has many benefits, one of the downsides of delta tables is that they rely on Spark to read the data. This might be infeasible, or atleast introduce a lot of overhead, if you want to build data applications like [Streamlit](https://www.streamlit.io/) apps or ML APIs ontop of the data in your Delta tables. 
 
 This package tries to fix this, by providing a lightweight python wrapper around the delta file format, **without** any Spark dependencies
-
-## Disclaimer
-Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
-The stand alone reader is JVM based, but an official Rust implementation with python bindings also exists. Back then the python bindings couldn't be pip installed, which was a major inconvenience for python developers, but this has since been added.
-While there is a lot of overlap between these two project, this projects still supports a few additional features, compared to the Rust implemtation, like more alternatives for authenticating to azure (identity based, instead of only relying on account key) and support for more file systems like GCP buckets.
-If you, however, are interested in a more actively maintained package, if would recommend [the official Delta Rust implemtation](
-https://github.com/delta-io/delta-rs).
-Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
 
 # Installation
 Install the package using pip
@@ -162,6 +156,16 @@ The tables were stored locally on a VM (8 vCPUs, 32GB ram). This might be a synt
 
 The results can be seen below, where `delta-lake-reader` is about 100x faster than `PySpark` on average
 ![](performance_tests/results.png)
+
+
+
+## Disclaimer (2021-01-15)
+Databricks recently announced a stand alone reader for Delta tables in a [blogpost](https://databricks.com/blog/2020/12/22/natively-query-your-delta-lake-with-scala-java-and-python.html)
+The stand alone reader is JVM based, but an "official" Rust implementation with python bindings also exists. Back then the python bindings couldn't be pip installed, which was a major inconvenience for python developers, but this has since been added.
+While there is a lot of overlap between these two project, this projects still supports a few additional features, compared to the Rust implemtation, like more alternatives for authenticating to azure (identity based, instead of only relying on account key) and support for more file systems like GCP buckets.
+If you, however, are interested in a more actively maintained package, if would recommend taking a look at [the Delta Rust implemtation](
+https://github.com/delta-io/delta-rs).
+Although the idea for this library was made independently, some inspirations has been taken from the Rust library.
 
 
 # Read more
