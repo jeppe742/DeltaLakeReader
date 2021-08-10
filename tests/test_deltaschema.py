@@ -8,6 +8,7 @@ from unittest import TestCase
 import pyspark
 from pyarrow.dataset import dataset as pyarrow_dataset
 from pyspark.sql.types import (
+    ArrayType,
     BinaryType,
     BooleanType,
     ByteType,
@@ -16,6 +17,7 @@ from pyspark.sql.types import (
     FloatType,
     IntegerType,
     LongType,
+    MapType,
     ShortType,
     StringType,
     StructField,
@@ -56,6 +58,17 @@ class DeltaSchemaMappingTest(TestCase):
                 StructField("boolean", BooleanType()),
                 StructField("timestamp", TimestampType()),
                 StructField("date", DateType()),
+                StructField("array", ArrayType(IntegerType())),
+                StructField("map", MapType(StringType(), IntegerType())),
+                StructField(
+                    "struct",
+                    StructType(
+                        [
+                            StructField("nested_int", IntegerType()),
+                            StructField("nested_string", StringType()),
+                        ]
+                    ),
+                ),
             ]
         )
 
@@ -72,6 +85,9 @@ class DeltaSchemaMappingTest(TestCase):
                 True,
                 datetime.now(),
                 datetime.now(),
+                [1, 2, 3],
+                {"a": 1, "b": 2},
+                [1, "a"],
             )
         ]
 
