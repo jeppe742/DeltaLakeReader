@@ -44,15 +44,6 @@ class DeltaTable:
         self.pyarrow_dataset = self._pyarrow_dataset()
 
     def _pyarrow_dataset(self):
-        # Use the latest file to fetch the schema.
-        # This will allow for schema evolution
-        # schema = pyarrow_dataset(
-        #     source=self._latest_file,
-        #     filesystem=self.filesystem,
-        #     partitioning="hive",
-        #     format="parquet",
-        # ).schema
-
         return pyarrow_dataset(
             source=list(self.files),
             filesystem=self.filesystem,
@@ -60,10 +51,6 @@ class DeltaTable:
             format="parquet",
             schema=self.schema,
         )
-
-    # @property
-    # def schema(self):
-    #     return self.pyarrow_dataset.schema
 
     def _is_delta_table(self):
         return self.filesystem.exists(f"{self.log_path}/{0:020}.json")
