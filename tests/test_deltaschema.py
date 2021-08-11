@@ -1,5 +1,4 @@
 import json
-import os
 import shutil
 import uuid
 from datetime import datetime
@@ -26,8 +25,6 @@ from pyspark.sql.types import (
 )
 
 from deltalake.schema import schema_from_string
-
-os.environ["PYSPARK_PYTHON"] = ".venv/bin/python3"
 
 
 class DeltaSchemaMappingTest(TestCase):
