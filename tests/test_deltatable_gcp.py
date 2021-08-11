@@ -266,6 +266,15 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
                 self.path
             )
 
+        # remove some columns, using schema evolution
+        df = df.select(col("id"), col("number"), col("number2"))
+        for i in range(5):
+            df.withColumn("id", col("id") + 1000 * (i + 15)).write.partitionBy(
+                "number2"
+            ).option("mergeSchema", "true").format("delta").mode("append").save(
+                self.path
+            )
+
         self.fs = GCSFileSystem(project=GCP_PROJECT_ID)
 
         self.fs.upload(self.path, f"{GCP_BUCKET}/{self.path}", recursive=True)
@@ -321,9 +330,25 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
             df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
         )
 
+    def test_version_removed_columns(self):
+        # read the parquet files using pandas
+        df_pandas = self.table.as_version(15, inplace=False).to_pandas()
+        # read the table using spark
+        df_spark = (
+            self.spark.read.format("delta")
+            .option("versionAsOf", 15)
+            .load(self.path)
+            .toPandas()
+        )
+
+        # compare dataframes. The index may not be the same order, so we ignore it
+        assert_frame_equal(
+            df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
+        )
+
     def test_partitioning(self):
         # Partition pruning should half number of rows
-        assert self.table.to_table(filter=ds.field("number2") == 0).num_rows == 7500
+        assert self.table.to_table(filter=ds.field("number2") == 0).num_rows == 10000
 
     def test_predicate_pushdown(self):
         # number is random 0-1, so we should have fewer than 12000 rows no matter what
