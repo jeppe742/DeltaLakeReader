@@ -68,11 +68,11 @@ class DeltaTable:
             return
 
         # read latest checkpoint. It might be a multi-part checkpoint for very large checkpoints
-        checkpoint_files = self.filesystem.glob(f"{self.log_path}/{self.checkpoint:020}.checkpoint*.parquet")
+        checkpoint_files = self.filesystem.glob(
+            f"{self.log_path}/{self.checkpoint:020}.checkpoint*.parquet"
+        )
         for checkpoint_path in checkpoint_files:
-            with self.filesystem.open(
-                checkpoint_path
-            ) as checkpoint_file:
+            with self.filesystem.open(checkpoint_path) as checkpoint_file:
                 checkpoint = pq.read_table(checkpoint_file).to_pandas()
 
                 for _, row in checkpoint.iterrows():
