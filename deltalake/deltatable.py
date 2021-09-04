@@ -67,20 +67,22 @@ class DeltaTable:
         if self.checkpoint == 0:
             return
 
-        # read latest checkpoint
-        with self.filesystem.open(
-            f"{self.log_path}/{self.checkpoint:020}.checkpoint.parquet"
-        ) as checkpoint_file:
-            checkpoint = pq.read_table(checkpoint_file).to_pandas()
+        # read latest checkpoint. It might be a multi-part checkpoint for very large checkpoints
+        checkpoint_files = self.filesystem.glob(f"{self.log_path}/{self.checkpoint:020}.checkpoint*.parquet")
+        for checkpoint_path in checkpoint_files:
+            with self.filesystem.open(
+                checkpoint_path
+            ) as checkpoint_file:
+                checkpoint = pq.read_table(checkpoint_file).to_pandas()
 
-            for i, row in checkpoint.iterrows():
-                if row["metaData"]:
-                    schema_string = row["metaData"]["schemaString"]
-                    self.schema = schema_from_string(schema_string)
-                elif row["add"]:
-                    added_file = f"{self.path}/{row['add']['path']}"
-                    if added_file:
-                        self.files.add(added_file)
+                for _, row in checkpoint.iterrows():
+                    if row["metaData"]:
+                        schema_string = row["metaData"]["schemaString"]
+                        self.schema = schema_from_string(schema_string)
+                    elif row["add"]:
+                        added_file = f"{self.path}/{row['add']['path']}"
+                        if added_file:
+                            self.files.add(added_file)
 
     def _apply_partial_logs(self, version: int):
         # Checkpoints are created every 10 transactions,
