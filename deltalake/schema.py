@@ -1,6 +1,6 @@
 import json
 from typing import Union
-
+import re
 import pyarrow as pa
 
 
@@ -42,9 +42,14 @@ def map_type(input_type: Union[dict, str]):
         if input_type in simple_type_mapping:
             pa_type = simple_type_mapping[input_type]
         else:
-            raise TypeError(
-                f"Got type unsupported {input_type} when trying to parse schema"
-            )
+            # check for decimal types
+            match = re.findall(r'decimal\(([0-9]*),([0-9])\)', input_type)
+            if len(match) > 0:
+                pa_type = pa.decimal128(int(match[0][0]), int(match[0][1]))
+            else:
+                raise TypeError(
+                    f"Got type unsupported {input_type} when trying to parse schema"
+                )
 
     # nested field needs special handling
     else:
