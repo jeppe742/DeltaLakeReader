@@ -1,6 +1,7 @@
 import json
-from typing import Union
 import re
+from typing import Union
+
 import pyarrow as pa
 
 
@@ -43,7 +44,7 @@ def map_type(input_type: Union[dict, str]):
             pa_type = simple_type_mapping[input_type]
         else:
             # check for decimal types
-            match = re.findall(r'decimal\(([0-9]*),([0-9])\)', input_type)
+            match = re.findall(r"decimal\(([0-9]*),([0-9])\)", input_type)
             if len(match) > 0:
                 pa_type = pa.decimal128(int(match[0][0]), int(match[0][1]))
             else:
