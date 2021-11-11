@@ -13,6 +13,7 @@ from pyspark.sql.types import (
     BooleanType,
     ByteType,
     DateType,
+    DecimalType,
     DoubleType,
     FloatType,
     IntegerType,
@@ -23,7 +24,6 @@ from pyspark.sql.types import (
     StructField,
     StructType,
     TimestampType,
-    DecimalType
 )
 
 from deltalake.schema import schema_from_string
@@ -52,7 +52,7 @@ class DeltaSchemaMappingTest(TestCase):
                 StructField("long", LongType()),
                 StructField("float", FloatType()),
                 StructField("double", DoubleType()),
-                StructField("decimal", DecimalType(38,10)),
+                StructField("decimal", DecimalType(38, 10)),
                 StructField("string", StringType()),
                 StructField("binary", BinaryType()),
                 StructField("boolean", BooleanType()),
