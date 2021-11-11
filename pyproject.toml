@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "delta-lake-reader"
-version = "0.2.9"
+version = "0.2.10"
 description = "Lightweight wrapper for reading Delta tables without Spark"
 authors = ["Jeppe Johan Waarkjær Olsen <jeppe742@gmail.com>"]
 packages= [{include="deltalake"}]
