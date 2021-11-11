@@ -2,6 +2,7 @@ import json
 import shutil
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from unittest import TestCase
 
 import pyspark
@@ -12,6 +13,7 @@ from pyspark.sql.types import (
     BooleanType,
     ByteType,
     DateType,
+    DecimalType,
     DoubleType,
     FloatType,
     IntegerType,
@@ -50,6 +52,7 @@ class DeltaSchemaMappingTest(TestCase):
                 StructField("long", LongType()),
                 StructField("float", FloatType()),
                 StructField("double", DoubleType()),
+                StructField("decimal", DecimalType(38, 10)),
                 StructField("string", StringType()),
                 StructField("binary", BinaryType()),
                 StructField("boolean", BooleanType()),
@@ -77,6 +80,7 @@ class DeltaSchemaMappingTest(TestCase):
                 1,
                 1.0,
                 1.0,
+                Decimal(1234567890.1234567890),
                 "1",
                 bytearray([1]),
                 True,
