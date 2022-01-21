@@ -53,7 +53,7 @@ class DeltaTable:
         )
 
     def _is_delta_table(self):
-        return self.filesystem.exists(f"{self.log_path}/{0:020}.json")
+        return self.filesystem.exists(f"{self.log_path}/_last_checkpoint")
 
     def _reset_state(self):
         self.files = set()
