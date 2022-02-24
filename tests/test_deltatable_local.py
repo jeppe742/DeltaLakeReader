@@ -4,6 +4,7 @@ from unittest import TestCase
 
 import pyarrow.dataset as ds
 import pyspark
+import pytest
 from pandas.testing import assert_frame_equal
 from pyspark.sql.functions import col, rand, when
 
@@ -11,7 +12,7 @@ from deltalake import DeltaTable, __version__
 
 
 def test_version():
-    assert __version__ == "0.2.11"
+    assert __version__ == "0.2.12"
 
 
 class DeltaReaderAppendTest(TestCase):
@@ -346,3 +347,9 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
     def test_column_pruning(self):
         t = self.table.to_table(columns=["number", "number2"])
         assert t.column_names == ["number", "number2"]
+
+
+class DeltaReaderExistTest(TestCase):
+    def test_is_deltatable(self):
+        with pytest.raises(ValueError):
+            DeltaTable("/foo")
