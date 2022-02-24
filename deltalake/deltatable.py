@@ -36,6 +36,12 @@ class DeltaTable:
         if file_system is None:
             file_system = LocalFileSystem()
         self.filesystem = file_system
+
+        if not self._is_delta_table():
+            raise ValueError(
+                f"""Could not find transaction logs in path {self.log_path}.
+                Make sure you point to the root of a delta table"""
+            )
         self._as_newest_version()
 
         # The PyArrow Dataset is exposed by a factory class,
