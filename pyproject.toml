@@ -12,7 +12,7 @@ repository = "https://github.com/jeppe742/DeltaLakeReader"
 python = "^3.7.1"
 pyarrow = "^5.0.0"
 fsspec = "^2021.5"
-pip = "^20.3.3"
+pip = "^21.0.1"
 adlfs = {version = "^0.7.5", optional = true}
 aiohttp = {version = "^3.7.3", optional = true}
 s3fs = {version = "^2021.5", optional = true}
