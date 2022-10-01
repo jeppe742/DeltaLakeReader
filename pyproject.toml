@@ -10,13 +10,13 @@ repository = "https://github.com/jeppe742/DeltaLakeReader"
 
 [tool.poetry.dependencies]
 python = "^3.7.1"
-pyarrow = "^5.0.0"
-fsspec = "^2021.5"
+pyarrow = "^9.0.0"
+fsspec = "^2022"
 #pip = "^21.0.1"
-adlfs = {version = "^0.7.5", optional = true}
+adlfs = {version = "^2022", optional = true}
 aiohttp = {version = "^3.7.3", optional = true}
-s3fs = {version = "^2021.5", optional = true}
-gcsfs = {version = "^2021.5", optional = true}
+s3fs = {version = "^2022", optional = true}
+gcsfs = {version = "^2022", optional = true}
 pandas = "^1.3.1"
 
 [tool.poetry.dev-dependencies]

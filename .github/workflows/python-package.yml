@@ -53,5 +53,4 @@ jobs:
           GCP_SA_KEY: ${{secrets.GCP_SA_KEY}}
 
         run: |
-          source $HOME/.poetry/env
           poetry run tox
