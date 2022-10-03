@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8"]
+        python-version: ["3.7", "3.8", "3.9","3.10"]
 
     steps:
       - uses: actions/checkout@v2
@@ -31,7 +31,6 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
       - name: Install dependencies
         run: |
-          source $HOME/.poetry/env
           poetry install
 
       - name: Set up Google Cloud SDK
@@ -54,5 +53,4 @@ jobs:
           GCP_SA_KEY: ${{secrets.GCP_SA_KEY}}
 
         run: |
-          source $HOME/.poetry/env
           poetry run tox
