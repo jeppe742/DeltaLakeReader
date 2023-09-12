@@ -4,18 +4,15 @@ from typing import Union
 
 import pyarrow as pa
 
-
 def schema_from_string(schema_string: str):
-
     fields = []
     schema = json.loads(schema_string)
     for field in schema["fields"]:
         name = field["name"]
         type = field["type"]
         nullable = field["nullable"]
-        metadata = field["metadata"]
+        metadata = {key: str(value) for key, value in field["metadata"].items()}
         pa_type = map_type(type)
-
         fields.append(pa.field(name, pa_type, nullable=nullable, metadata=metadata))
     return pa.schema(fields)
 
