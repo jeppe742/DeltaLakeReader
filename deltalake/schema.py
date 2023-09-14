@@ -13,7 +13,7 @@ def schema_from_string(schema_string: str):
         name = field["name"]
         type = field["type"]
         nullable = field["nullable"]
-        metadata = field["metadata"]
+        metadata = {key: str(value) for key, value in field["metadata"].items()}
         pa_type = map_type(type)
 
         fields.append(pa.field(name, pa_type, nullable=nullable, metadata=metadata))
