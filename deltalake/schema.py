@@ -6,7 +6,6 @@ import pyarrow as pa
 
 
 def schema_from_string(schema_string: str):
-
     fields = []
     schema = json.loads(schema_string)
     for field in schema["fields"]:
@@ -21,7 +20,6 @@ def schema_from_string(schema_string: str):
 
 
 def map_type(input_type: Union[dict, str]):
-
     simple_type_mapping = {
         "byte": pa.int8(),
         "short": pa.int16(),
@@ -38,7 +36,6 @@ def map_type(input_type: Union[dict, str]):
 
     # If type is string, it should be a "simple" datatype
     if isinstance(input_type, str):
-
         # map simple data types, that can be directly converted
         if input_type in simple_type_mapping:
             pa_type = simple_type_mapping[input_type]

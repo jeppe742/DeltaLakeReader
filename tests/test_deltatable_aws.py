@@ -54,12 +54,10 @@ class DeltaReaderAppendTest(TestCase):
         assert self.table.log_path == f"{AWS_BUCKET}/{self.path}/_delta_log"
 
     def test_versions(self):
-
         assert self.table.checkpoint == 10
         assert self.table.version == 11
 
     def test_data(self):
-
         # read the parquet files using pandas
         df_pandas = self.table.to_pandas()
         # read the table using spark
@@ -160,12 +158,10 @@ class DeltaReaderUpdateTest(TestCase):
         assert self.table.log_path == f"{AWS_BUCKET}/{self.path}/_delta_log"
 
     def test_versions(self):
-
         assert self.table.checkpoint == 10
         assert self.table.version == 12
 
     def test_data(self):
-
         # read the parquet files using pandas
         df_pandas = self.table.to_pandas()
         # read the table using spark
@@ -286,7 +282,6 @@ class DeltaReaderSchemaEvolutionTest(TestCase):
         shutil.rmtree(self.path)
 
     def test_data(self):
-
         # read the parquet files using pandas
         df_pandas = self.table.to_pandas()
         # read the table using spark
