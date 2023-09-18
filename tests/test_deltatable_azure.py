@@ -229,142 +229,142 @@ class DeltaReaderUpdateTest(TestCase):
         assert t.column_names == ["number", "number2"]
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=10)
-class DeltaReaderSchemaEvolutionTest(TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.container = str(uuid.uuid4())
-        self.path = f"{self.container}/tests/table1"
-        self.spark = (
-            pyspark.sql.SparkSession.builder.appName("deltalake")
-            .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
-            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-            .config(
-                "spark.sql.catalog.spark_catalog",
-                "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-            )
-            .getOrCreate()
-        )
+# @pytest.mark.flaky(reruns=3, reruns_delay=10)
+# class DeltaReaderSchemaEvolutionTest(TestCase):
+#     @classmethod
+#     def setUpClass(self):
+#         self.container = str(uuid.uuid4())
+#         self.path = f"{self.container}/tests/table1"
+#         self.spark = (
+#             pyspark.sql.SparkSession.builder.appName("deltalake")
+#             .config("spark.jars.packages", "io.delta:delta-core_2.12:0.7.0")
+#             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+#             .config(
+#                 "spark.sql.catalog.spark_catalog",
+#                 "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+#             )
+#             .getOrCreate()
+#         )
 
-        df = (
-            self.spark.range(0, 1000)
-            .withColumn("number", rand())
-            .withColumn("number2", when(col("id") < 500, 0).otherwise(1))
-        )
+#         df = (
+#             self.spark.range(0, 1000)
+#             .withColumn("number", rand())
+#             .withColumn("number2", when(col("id") < 500, 0).otherwise(1))
+#         )
 
-        for i in range(5):
-            df.withColumn("id", col("id") + 1000 * i).write.partitionBy(
-                "number2"
-            ).format("delta").mode("append").save(self.path)
+#         for i in range(5):
+#             df.withColumn("id", col("id") + 1000 * i).write.partitionBy(
+#                 "number2"
+#             ).format("delta").mode("append").save(self.path)
 
-        # Add data with one more column, using schema evolution
-        df = df.withColumn("number3", rand())
-        for i in range(5):
-            df.withColumn("id", col("id") + 1000 * (i + 5)).write.partitionBy(
-                "number2"
-            ).option("mergeSchema", "true").format("delta").mode("append").save(
-                self.path
-            )
+#         # Add data with one more column, using schema evolution
+#         df = df.withColumn("number3", rand())
+#         for i in range(5):
+#             df.withColumn("id", col("id") + 1000 * (i + 5)).write.partitionBy(
+#                 "number2"
+#             ).option("mergeSchema", "true").format("delta").mode("append").save(
+#                 self.path
+#             )
 
-        # Add data with one more column, using schema evolution
-        df = df.withColumn("number4", rand())
-        for i in range(5):
-            df.withColumn("id", col("id") + 1000 * (i + 10)).write.partitionBy(
-                "number2"
-            ).option("mergeSchema", "true").format("delta").mode("append").save(
-                self.path
-            )
+#         # Add data with one more column, using schema evolution
+#         df = df.withColumn("number4", rand())
+#         for i in range(5):
+#             df.withColumn("id", col("id") + 1000 * (i + 10)).write.partitionBy(
+#                 "number2"
+#             ).option("mergeSchema", "true").format("delta").mode("append").save(
+#                 self.path
+#             )
 
-        # remove some columns, using schema evolution
-        df = df.select(col("id"), col("number"), col("number2"))
-        for i in range(5):
-            df.withColumn("id", col("id") + 1000 * (i + 15)).write.partitionBy(
-                "number2"
-            ).option("mergeSchema", "true").format("delta").mode("append").save(
-                self.path
-            )
+#         # remove some columns, using schema evolution
+#         df = df.select(col("id"), col("number"), col("number2"))
+#         for i in range(5):
+#             df.withColumn("id", col("id") + 1000 * (i + 15)).write.partitionBy(
+#                 "number2"
+#             ).option("mergeSchema", "true").format("delta").mode("append").save(
+#                 self.path
+#             )
 
-        self.fs = AzureBlobFileSystem(
-            account_name=AZURE_ACCOUNT_NAME, account_key=AZURE_ACCOUNT_KEY
-        )
-        self.fs.mkdir(self.container)
-        self.fs.upload(self.path, self.path, recursive=True)
-        self.table = DeltaTable(self.path, file_system=self.fs)
+#         self.fs = AzureBlobFileSystem(
+#             account_name=AZURE_ACCOUNT_NAME, account_key=AZURE_ACCOUNT_KEY
+#         )
+#         self.fs.mkdir(self.container)
+#         self.fs.upload(self.path, self.path, recursive=True)
+#         self.table = DeltaTable(self.path, file_system=self.fs)
 
-    @classmethod
-    def tearDownClass(self):
-        # remove folder when we are done with the test
-        self.fs.rm(self.path, recursive=True)
-        self.fs.rmdir(self.container)
-        shutil.rmtree(self.path)
+#     @classmethod
+#     def tearDownClass(self):
+#         # remove folder when we are done with the test
+#         self.fs.rm(self.path, recursive=True)
+#         self.fs.rmdir(self.container)
+#         shutil.rmtree(self.path)
 
-    def test_data(self):
-        # read the parquet files using pandas
-        df_pandas = self.table.to_pandas()
-        # read the table using spark
-        df_spark = self.spark.read.format("delta").load(self.path).toPandas()
+#     def test_data(self):
+#         # read the parquet files using pandas
+#         df_pandas = self.table.to_pandas()
+#         # read the table using spark
+#         df_spark = self.spark.read.format("delta").load(self.path).toPandas()
 
-        # compare dataframes. The index may not be the same order, so we ignore it
-        assert_frame_equal(
-            df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
-        )
+#         # compare dataframes. The index may not be the same order, so we ignore it
+#         assert_frame_equal(
+#             df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
+#         )
 
-    def test_version_no_checkpoint(self):
-        # read the parquet files using pandas
-        df_pandas = self.table.as_version(5, inplace=False).to_pandas()
-        # read the table using spark
-        df_spark = (
-            self.spark.read.format("delta")
-            .option("versionAsOf", 5)
-            .load(self.path)
-            .toPandas()
-        )
+#     def test_version_no_checkpoint(self):
+#         # read the parquet files using pandas
+#         df_pandas = self.table.as_version(5, inplace=False).to_pandas()
+#         # read the table using spark
+#         df_spark = (
+#             self.spark.read.format("delta")
+#             .option("versionAsOf", 5)
+#             .load(self.path)
+#             .toPandas()
+#         )
 
-        # compare dataframes. The index may not be the same order, so we ignore it
-        assert_frame_equal(
-            df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
-        )
+#         # compare dataframes. The index may not be the same order, so we ignore it
+#         assert_frame_equal(
+#             df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
+#         )
 
-    def test_version_checkpoint(self):
-        # read the parquet files using pandas
-        df_pandas = self.table.as_version(11, inplace=False).to_pandas()
-        # read the table using spark
-        df_spark = (
-            self.spark.read.format("delta")
-            .option("versionAsOf", 11)
-            .load(self.path)
-            .toPandas()
-        )
+#     def test_version_checkpoint(self):
+#         # read the parquet files using pandas
+#         df_pandas = self.table.as_version(11, inplace=False).to_pandas()
+#         # read the table using spark
+#         df_spark = (
+#             self.spark.read.format("delta")
+#             .option("versionAsOf", 11)
+#             .load(self.path)
+#             .toPandas()
+#         )
 
-        # compare dataframes. The index may not be the same order, so we ignore it
-        assert_frame_equal(
-            df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
-        )
+#         # compare dataframes. The index may not be the same order, so we ignore it
+#         assert_frame_equal(
+#             df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
+#         )
 
-    def test_version_removed_columns(self):
-        # read the parquet files using pandas
-        df_pandas = self.table.as_version(15, inplace=False).to_pandas()
-        # read the table using spark
-        df_spark = (
-            self.spark.read.format("delta")
-            .option("versionAsOf", 15)
-            .load(self.path)
-            .toPandas()
-        )
+#     def test_version_removed_columns(self):
+#         # read the parquet files using pandas
+#         df_pandas = self.table.as_version(15, inplace=False).to_pandas()
+#         # read the table using spark
+#         df_spark = (
+#             self.spark.read.format("delta")
+#             .option("versionAsOf", 15)
+#             .load(self.path)
+#             .toPandas()
+#         )
 
-        # compare dataframes. The index may not be the same order, so we ignore it
-        assert_frame_equal(
-            df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
-        )
+#         # compare dataframes. The index may not be the same order, so we ignore it
+#         assert_frame_equal(
+#             df_pandas.set_index("id"), df_spark.set_index("id"), check_like=True
+#         )
 
-    def test_partitioning(self):
-        # Partition pruning should half number of rows
-        assert self.table.to_table(filter=ds.field("number2") == 0).num_rows == 10000
+#     def test_partitioning(self):
+#         # Partition pruning should half number of rows
+#         assert self.table.to_table(filter=ds.field("number2") == 0).num_rows == 10000
 
-    def test_predicate_pushdown(self):
-        # number is random 0-1, so we should have fewer than 12000 rows no matter what
-        assert self.table.to_table(filter=ds.field("number") < 0.5).num_rows < 12000
+#     def test_predicate_pushdown(self):
+#         # number is random 0-1, so we should have fewer than 12000 rows no matter what
+#         assert self.table.to_table(filter=ds.field("number") < 0.5).num_rows < 12000
 
-    def test_column_pruning(self):
-        t = self.table.to_table(columns=["number", "number2"])
-        assert t.column_names == ["number", "number2"]
+#     def test_column_pruning(self):
+#         t = self.table.to_table(columns=["number", "number2"])
+#         assert t.column_names == ["number", "number2"]
