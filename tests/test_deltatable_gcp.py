@@ -14,7 +14,6 @@ from deltalake import DeltaTable
 GCP_BUCKET = os.getenv("GCP_BUCKET")
 GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 
-
 class DeltaReaderAppendTest(TestCase):
     @classmethod
     def setUpClass(self):
@@ -114,7 +113,6 @@ class DeltaReaderAppendTest(TestCase):
     def test_column_pruning(self):
         t = self.table.to_table(columns=["number", "number2"])
         assert t.column_names == ["number", "number2"]
-
 
 class DeltaReaderUpdateTest(TestCase):
     @classmethod
@@ -220,7 +218,6 @@ class DeltaReaderUpdateTest(TestCase):
     def test_column_pruning(self):
         t = self.table.to_table(columns=["number", "number2"])
         assert t.column_names == ["number", "number2"]
-
 
 class DeltaReaderSchemaEvolutionTest(TestCase):
     @classmethod
