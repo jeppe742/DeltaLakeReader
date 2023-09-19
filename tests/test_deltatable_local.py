@@ -12,7 +12,7 @@ from deltalake import DeltaTable, __version__
 
 
 def test_version():
-    assert __version__ == "0.2.13"
+    assert __version__ == "0.2.14"
 
 
 class DeltaReaderAppendTest(TestCase):
