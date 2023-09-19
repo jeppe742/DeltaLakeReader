@@ -65,7 +65,6 @@ class DeltaTable:
         self.files = set()
 
     def _apply_from_checkpoint(self, checkpoint_version: int):
-
         # reset file set, and checkpoint version
         self._reset_state()
         self.checkpoint = checkpoint_version
@@ -103,7 +102,6 @@ class DeltaTable:
         # sort the log files, so we are sure we get the correct order
         log_files = sorted(log_files)
         for log_file in log_files:
-
             # Get version from log name
             log_version = re.findall(r"(\d{20})", log_file)[0]
             self.version = int(log_version)

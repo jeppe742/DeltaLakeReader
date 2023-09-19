@@ -101,7 +101,6 @@ class DeltaSchemaMappingTest(TestCase):
         shutil.rmtree(self.path)
 
     def test_schema_mapping(self):
-
         expected_schema = pyarrow_dataset(
             source=self.path,
             format="parquet",
