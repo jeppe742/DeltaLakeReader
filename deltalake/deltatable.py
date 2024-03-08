@@ -126,8 +126,11 @@ class DeltaTable:
                         if remove_file in self.files:
                             self.files.remove(remove_file)
                     elif "metaData" in meta_data.keys():
-                        schema_string = meta_data["metaData"]["schemaString"]
-                        self.schema = schema_from_string(schema_string)
+                        try:
+                           schema_string = meta_data["metaData"]["schemaString"]
+                           self.schema = schema_from_string(schema_string)
+                        except KeyError as e:
+                            print(f"problematic record : {log_file},{e}")
                 # Stop if we have reatched the desired version
                 if self.version == version:
                     break
